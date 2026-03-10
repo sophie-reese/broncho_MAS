@@ -16,7 +16,7 @@ BronchoMAS is a modular Python framework for **conversational bronchoscopy guida
    - useful for replay analysis, debriefing, and future academic extension
 
 The project was built around a practical constraint:  
-**support real-time guidance without requiring invasive edits to co-worker runtime code**, while still preserving a more ambitious multi-agent research path for experimentation and evaluation. This follows the earlier design direction of adding a conversational coaching layer on top of an existing perception/runtime pipeline rather than replacing it. :contentReference[oaicite:3]{index=3} :contentReference[oaicite:4]{index=4}
+**support real-time guidance without requiring invasive edits to co-worker runtime code**, while still preserving a more ambitious multi-agent research path for experimentation and evaluation. This follows the earlier design direction of adding a conversational coaching layer on top of an existing perception/runtime pipeline rather than replacing it.
 
 ---
 
@@ -36,7 +36,7 @@ Earlier design work for this project defined a real-time conversational coach wi
 - safety guard logic,
 - tutoring/pedagogy guidance,
 - event-driven message flow,
-- and post-session evaluation goals. :contentReference[oaicite:5]{index=5} :contentReference[oaicite:6]{index=6}
+- and post-session evaluation goals. 
 
 This repository turns that direction into a cleaner implementation path.
 
@@ -56,7 +56,7 @@ Its job is to:
 - stay robust under latency pressure
 - degrade gracefully when the LLM is slow or unavailable
 
-This design follows the earlier real-time implementation blueprint in which curriculum is generated deterministically first, and the LLM is used mainly to verbalize or polish the plan rather than decide navigation itself. That is important for safety, stability, and latency. :contentReference[oaicite:7]{index=7}
+This design follows the earlier real-time implementation blueprint in which curriculum is generated deterministically first, and the LLM is used mainly to verbalize or polish the plan rather than decide navigation itself. That is important for safety, stability, and latency.
 
 ### 2. Research track
 The research track is the **rich path**.
@@ -108,7 +108,7 @@ The real-time guidance design follows a few strict rules:
 - keep conversation aligned with procedural flow
 - separate deterministic navigation/planning from natural-language rendering
 
-These constraints come directly from the earlier architecture notes and are still central to the current project direction. :contentReference[oaicite:9]{index=9}
+These constraints come directly from the earlier architecture notes and are still central to the current project direction. 
 
 ---
 
@@ -179,7 +179,7 @@ That earlier version already established several good principles that still matt
 - use a **fast prompt mode** for live guidance
 - enforce **LLM timeout guards**
 - keep deterministic planning ahead of language generation
-- route urgent actions through interruption-aware output handling :contentReference[oaicite:10]{index=10}
+- route urgent actions through interruption-aware output handling
 
 ---
 
@@ -201,7 +201,7 @@ The intended integration pattern is:
 6. send utterances to the existing TTS layer
 7. if an action is urgent, interrupt current speech before emitting the new one
 
-This mirrors the earlier implementation plan and remains the preferred engineering strategy because it reduces coupling and makes the system easier to test in isolation. :contentReference[oaicite:11]{index=11}
+This mirrors the earlier implementation plan and remains the preferred engineering strategy because it reduces coupling and makes the system easier to test in isolation. 
 
 ---
 
@@ -216,7 +216,7 @@ Safety design priorities include:
 - enabling urgent override behavior
 - keeping logs for replay and inspection
 
-The original architecture notes explicitly framed the system as a training copilot with a safety guard and non-diagnostic training scope, and that remains the intended scope here. :contentReference[oaicite:12]{index=12} :contentReference[oaicite:13]{index=13}
+The original architecture notes explicitly framed the system as a training copilot with a safety guard and non-diagnostic training scope, and that remains the intended scope here. 
 
 ---
 
@@ -224,7 +224,7 @@ The original architecture notes explicitly framed the system as a training copil
 
 The real-time design target is conversational guidance that returns quickly enough to remain usable during bronchoscopy training flow.
 
-Earlier design notes used an end-to-end target of roughly **< 1500 ms** from input update to spoken guidance, with bounded latency budgets across state update, safety checks, generation, and TTS startup. That target strongly shaped the runtime-first architecture in this project. :contentReference[oaicite:14]{index=14}
+Earlier design notes used an end-to-end target of roughly **< 1500 ms** from input update to spoken guidance, with bounded latency budgets across state update, safety checks, generation, and TTS startup. That target strongly shaped the runtime-first architecture in this project. 
 
 In practice, this means:
 - the runtime path must stay narrow
@@ -284,13 +284,5 @@ Earlier and supporting design documents include:
 - real-time runtime implementation notes
 - testing guide
 
-These documents shaped the current structure and are useful for understanding the original design goals, especially around safety, latency, contracts, and integration boundaries. :contentReference[oaicite:15]{index=15} :contentReference[oaicite:16]{index=16}
+These documents shaped the current structure and are useful for understanding the original design goals, especially around safety, latency, contracts, and integration boundaries. 
 
----
-
-## Suggested quick start
-
-### 1. Clone the repository
-```bash
-git clone <your-repo-url>
-cd <your-repo-folder>
