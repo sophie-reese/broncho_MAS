@@ -16,6 +16,25 @@ Instead of forcing one single architecture to do everything, this project keeps 
 - a **runtime track** for faster and more stable live guidance
 - a **research track** for heavier orchestration, logging, and analysis
 
+## Where to look first
+
+
+- `bronchoscopy_guidance_system/src` 
+  This is the main code area of the repository.
+
+- `bronchoscopy_guidance_system/broncho_mas_demo.ipynb 
+  This notebook is for quick testing, debugging, and demonstration.  
+  After downloading the repository, these notebooks can be used as a simple entry point for running and inspecting the current prototype     without going through the full runtime integration path.
+
+- `bronchoscopy_guidance_system/src/broncho_mas/runtime/`  
+  Look here for the real-time guidance path. This is currently the more practical direction for live instructional support.
+
+- `bronchoscopy_guidance_system/src/broncho_mas/research/`  
+  Look here for the richer research-oriented path, including multi-agent experimentation and reporting-related logic.
+
+- `documentation/`  
+  Contains project background, design rationale, and supporting notes.
+
 ---
 
 ## Why there are two tracks
