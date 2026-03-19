@@ -18,22 +18,26 @@ Instead of forcing one single architecture to do everything, this project keeps 
 
 ## Where to look first
 
+This branch contains the latest updates related to shared logging and upstream state/information injection.
 
-- `bronchoscopy_guidance_system/src` 
-  This is the main code area of the repository.
+### Main focus of this update
+- shared logging infrastructure for both runtime and research workflows
+- integration of upstream state/information into the system input flow
+- improved internal traceability for analysis and future reporting
+- cleaner coordination between shared, runtime, and research components
 
-- `bronchoscopy_guidance_system/broncho_mas_demo.ipynb 
-  This notebook is for quick testing, debugging, and demonstration.  
-  After downloading the repository, these notebooks can be used as a simple entry point for running and inspecting the current prototype     without going through the full runtime integration path.
+### Main code locations
+- `src/broncho_mas/shared/`  
+  Shared infrastructure, including logging, event/state handling, prompting support, and common utilities.
 
-- `bronchoscopy_guidance_system/src/broncho_mas/runtime/`  
-  Look here for the real-time guidance path. This is currently the more practical direction for live instructional support.
+- `src/broncho_mas/runtime/`  
+  Runtime-side components for real-time guidance and system execution.
 
-- `bronchoscopy_guidance_system/src/broncho_mas/research/`  
-  Look here for the richer research-oriented path, including multi-agent experimentation and reporting-related logic.
+- `src/broncho_mas/research/`  
+  Research-side components for multi-agent experimentation, analysis, and reporting.
 
-- `documentation/`  
-  Contains project background, design rationale, and supporting notes.
+- `src/broncho_mas/adapter.py` and `src/broncho_mas/cli.py`  
+  Entry-level integration points for connecting the package to external workflows.es.
 
 ---
 
