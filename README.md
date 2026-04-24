@@ -40,7 +40,7 @@ Instead of forcing one single architecture to do everything, this project keeps 
 
 ---
 
-## Why there are two tracks
+## Why there are multiple tracks
 
 Earlier experiments focused more heavily on a multi-agent pipeline. The content quality could be good, but the full chain was often too slow and too heavy for strict real-time use.
 
@@ -52,7 +52,7 @@ For bronchoscopy training, this matters. Guidance needs to be:
 - stable under latency pressure
 - grounded in structured upstream state
 
-Because of that, the project evolved into a two-line design:
+Because of that, the project evolved into a three-line design:
 
 ### 1. Runtime path
 The runtime path is the practical live path.
@@ -67,8 +67,8 @@ It is designed to:
 
 In this path, deterministic logic handles the parts that must stay stable, and the LLM is mainly used to verbalize the guidance more naturally.
 
-### 2. Research path
-The research path is the richer experimental path.
+### 2. MAS path
+The MAS or research path is the richer experimental path.
 
 It is designed to:
 
@@ -79,6 +79,18 @@ It is designed to:
 - preserve the broader multi-agent direction for academic exploration
 
 This path is useful for experimentation and evaluation, but it is not the best choice for strict real-time constraints.
+
+### 3. SAS path
+
+To balance controllability and flexibility, the SAS path uses:
+
+- one manager
+- a small set of specialized skills
+- deterministic helpers
+- structured outputs
+- optional LLM realization
+
+This allows the system to remain modular and instructional, while still being stable enough for real-time bronchoscopy training.
 
 ---
 
