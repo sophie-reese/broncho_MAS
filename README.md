@@ -32,7 +32,7 @@ Instead of forcing one single architecture to do everything, this project keeps 
 - `bronchoscopy_guidance_system/src/broncho_mas/sas/`
   This is the single-agent skill runtime path. SAS skills are now split into the `src/broncho_mas/sas/skills/` package by responsibility instead of living in one large module, and `src/broncho_mas/sas/manager.py` owns turn state, structured turn logging, and skill dispatch/arbitration.
 
-- `bronchoscopy_guidance_system/src/broncho_mas/research/`  
+- `bronchoscopy_guidance_system/src/broncho_mas/mas/`  
   Look here for the richer research-oriented path, including multi-agent experimentation and reporting-related logic.
 
 - `documentation/`  
