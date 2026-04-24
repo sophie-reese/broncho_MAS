@@ -86,6 +86,8 @@ class DirectionalHintBuilder:
     ) -> None:
         self.deadzone = deadzone or DeadzoneConfig()
         self.prefer_order: List[str] = list(prefer_order or ("rotate", "bend", "translate"))
+        self._last_primary_action: Optional[str] = None
+        self._repeat_primary_count: int = 0
 
     # ---------------------------------------------------------------------
     # Public API
@@ -136,6 +138,14 @@ class DirectionalHintBuilder:
             force_backtrack_primary=force_backtrack_primary,
             include_secondary=include_secondary,
         )
+        primary_action, secondary_action, stale_note = self._suppress_stale_primary(
+            primary_action=primary_action,
+            secondary_action=secondary_action,
+            bend_text=bend_text,
+            rotate_text=rotate_text,
+            translate_text=translate_text,
+            event_flag=event_flag,
+        )
 
         return DirectionalHint(
             bend_label=bend_label,
@@ -148,7 +158,7 @@ class DirectionalHintBuilder:
             secondary_action=secondary_action,
             confidence="heuristic",
             source="m_jointsVelRel",
-            notes=self._notes_for(event_flag, bend_label, rotate_label, translate_label),
+            notes=self._notes_for(event_flag, bend_label, rotate_label, translate_label, stale_note=stale_note),
         )
 
     def build_prompt_block(
@@ -289,12 +299,63 @@ class DirectionalHintBuilder:
 
         return primary, secondary
 
+    def _suppress_stale_primary(
+        self,
+        *,
+        primary_action: Optional[str],
+        secondary_action: Optional[str],
+        bend_text: Optional[str],
+        rotate_text: Optional[str],
+        translate_text: Optional[str],
+        event_flag: Optional[int],
+    ) -> tuple[Optional[str], Optional[str], Optional[str]]:
+        stale_note: Optional[str] = None
+
+        if primary_action and primary_action == self._last_primary_action:
+            self._repeat_primary_count += 1
+        else:
+            self._repeat_primary_count = 1 if primary_action else 0
+            self._last_primary_action = primary_action
+
+        if not primary_action:
+            self._last_primary_action = None
+            self._repeat_primary_count = 0
+            return primary_action, secondary_action, stale_note
+
+        if event_flag == 6:
+            return primary_action, secondary_action, stale_note
+
+        rotate_repeat = primary_action in {"rotate clockwise", "rotate counter-clockwise"} and self._repeat_primary_count >= 3
+        if not rotate_repeat:
+            return primary_action, secondary_action, stale_note
+
+        stale_note = f"stale_primary={primary_action};repeat={self._repeat_primary_count}"
+        fallback_primary = None
+        fallback_secondary = None
+
+        if translate_text == "pull back the scope":
+            fallback_primary = translate_text
+            fallback_secondary = "re-center the view"
+        elif bend_text and bend_text != primary_action:
+            fallback_primary = "re-center the view"
+            fallback_secondary = bend_text
+        else:
+            fallback_primary = "re-center the view"
+            if translate_text and translate_text != primary_action:
+                fallback_secondary = translate_text
+
+        self._last_primary_action = fallback_primary
+        self._repeat_primary_count = 1
+        return fallback_primary, fallback_secondary or secondary_action, stale_note
+
     @staticmethod
     def _notes_for(
         event_flag: Optional[int],
         bend_label: str,
         rotate_label: str,
         translate_label: str,
+        *,
+        stale_note: Optional[str] = None,
     ) -> str:
         bits = [
             f"event_flag={event_flag}",
@@ -302,6 +363,8 @@ class DirectionalHintBuilder:
             f"rotate={rotate_label}",
             f"translate={translate_label}",
         ]
+        if stale_note:
+            bits.append(stale_note)
         return "; ".join(bits)
 
     @staticmethod
@@ -323,6 +386,7 @@ class DirectionalHintBuilder:
             "rotate counter-clockwise": "Rotate counter-clockwise slightly.",
             "push forward the scope": "Advance slowly.",
             "pull back the scope": "Pull back slowly.",
+            "re-center the view": "Re-center first.",
         }
         return replacements.get(action, DirectionalHintBuilder._sentence_case(action))
 

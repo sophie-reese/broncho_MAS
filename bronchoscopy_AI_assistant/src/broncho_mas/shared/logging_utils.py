@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import platform
+import re
 import time
 import uuid
 from datetime import datetime
@@ -16,6 +17,36 @@ PathLike = Union[str, Path]
 def _session_id_now() -> str:
     """Return a high-resolution session id to avoid collisions."""
     return datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+
+
+def _looks_like_session_dir(path: Path) -> bool:
+    name = str(path.name or "")
+    if re.fullmatch(r"\d{8}_\d{6}", name):
+        return True
+    if re.fullmatch(r"\d{8}_\d{6}_\d{6}", name):
+        return True
+    markers = ("meta.json", "timeline.jsonl", "errors.jsonl")
+    return any((path / marker).exists() for marker in markers)
+
+
+def _resolve_existing_run_dir(
+    log_root: Optional[PathLike] = None,
+    session_id: Optional[str] = None,
+) -> Optional[Path]:
+    if session_id is not None and str(session_id).strip():
+        return None
+
+    env_run_dir = os.environ.get("BRONCHO_RUN_DIR") or os.environ.get("BRONCHO_RECORDING_DIR")
+    if env_run_dir and str(env_run_dir).strip():
+        candidate = Path(env_run_dir).expanduser().resolve()
+        if candidate.exists():
+            return candidate
+
+    if log_root is not None and str(log_root).strip():
+        candidate = Path(log_root).expanduser().resolve()
+        if candidate.exists() and _looks_like_session_dir(candidate):
+            return candidate
+    return None
 
 
 
@@ -46,15 +77,21 @@ class RunLogger:
         session_id: Optional[str] = None,
         pipeline: str = "runtime",
     ):
-        self.log_root = _resolve_log_root(log_root)
-        self.session_id = session_id or _session_id_now()
+        existing_run_dir = _resolve_existing_run_dir(log_root=log_root, session_id=session_id)
+        if existing_run_dir is not None:
+            self.run_dir = existing_run_dir
+            self.log_root = self.run_dir.parent
+            self.session_id = self.run_dir.name
+        else:
+            self.log_root = _resolve_log_root(log_root)
+            self.session_id = session_id or os.environ.get("BRONCHO_SESSION_ID") or _session_id_now()
+            self.run_dir = self.log_root / self.session_id
+            self.run_dir.mkdir(parents=True, exist_ok=True)
         self.pipeline = str(pipeline or "runtime")
-
-        self.run_dir = self.log_root / self.session_id
-        self.run_dir.mkdir(parents=True, exist_ok=True)
 
         os.environ["BRONCHO_LOG_ROOT"] = str(self.log_root)
         os.environ["BRONCHO_RUN_DIR"] = str(self.run_dir)
+        os.environ["BRONCHO_SESSION_ID"] = str(self.session_id)
         os.environ.setdefault("BRONCHO_RECORDING_DIR", str(self.run_dir))
 
         self.meta_path = self.run_dir / "meta.json"

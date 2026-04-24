@@ -1,0 +1,16 @@
+{
+  "schema": "broncho.meta.v2",
+  "manager": "SASManager",
+  "pipeline": "sas",
+  "design": "single_agent_grounded",
+  "provider": "",
+  "model": "dummy",
+  "fallback_backend": true,
+  "session_id": "20260322_114336_627236",
+  "created_ts": 1774176216.763307,
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.4",
+  "cwd": "C:\\Users\\LAB-ADMIN\\Documents\\GitHub\\broncho_MAS",
+  "log_root": "C:\\Users\\LAB-ADMIN\\Documents\\GitHub\\broncho_MAS\\mas_log",
+  "run_dir": "C:\\Users\\LAB-ADMIN\\Documents\\GitHub\\broncho_MAS\\mas_log\\20260322_114336_627236"
+}

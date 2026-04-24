@@ -1,0 +1,15 @@
+{
+  "manager": "RuntimeManager",
+  "provider": "openai",
+  "model": "gpt-5.4-nano-2026-03-17",
+  "fallback_backend": false,
+  "schema": "broncho.meta.v2",
+  "session_id": "20260322_171508_977890",
+  "pipeline": "runtime",
+  "created_ts": 1774196108.9778903,
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.4",
+  "cwd": "C:\\Users\\LAB-ADMIN\\Documents\\GitHub\\broncho_MAS\\bronchoscopy_AI_assistant",
+  "log_root": "C:\\Users\\LAB-ADMIN\\Documents\\GitHub\\broncho_MAS\\bronchoscopy_AI_assistant\\mas_log",
+  "run_dir": "C:\\Users\\LAB-ADMIN\\Documents\\GitHub\\broncho_MAS\\bronchoscopy_AI_assistant\\mas_log\\20260322_171508_977890"
+}

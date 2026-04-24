@@ -1,0 +1,24 @@
+{
+  "schema": "broncho.meta.v2",
+  "manager": "SASManager",
+  "pipeline": "sas",
+  "design": "single_agent_skills",
+  "skills": [
+    "curriculum_skill",
+    "directional_skill",
+    "guidance_skill",
+    "question_router_skill",
+    "qa_skill",
+    "statistics_skill"
+  ],
+  "provider": "openai",
+  "model": "gpt-5.4-nano-2026-03-17",
+  "fallback_backend": false,
+  "session_id": "20260322_220017_389997",
+  "created_ts": 1774213217.3899977,
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.4",
+  "cwd": "C:\\Users\\LAB-ADMIN\\Documents\\GitHub\\broncho_MAS\\bronchoscopy_AI_assistant",
+  "log_root": "C:\\Users\\LAB-ADMIN\\Documents\\GitHub\\broncho_MAS\\bronchoscopy_AI_assistant\\mas_log",
+  "run_dir": "C:\\Users\\LAB-ADMIN\\Documents\\GitHub\\broncho_MAS\\bronchoscopy_AI_assistant\\mas_log\\20260322_220017_389997"
+}

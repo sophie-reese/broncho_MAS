@@ -1,0 +1,15 @@
+{
+  "manager": "RuntimeManager",
+  "provider": "hf",
+  "model": "dummy",
+  "fallback_backend": true,
+  "schema": "broncho.meta.v2",
+  "session_id": "20260322_152552_311474",
+  "pipeline": "runtime",
+  "created_ts": 1774189552.3139472,
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.4",
+  "cwd": "C:\\Users\\LAB-ADMIN\\Documents\\GitHub\\broncho_MAS",
+  "log_root": "C:\\Users\\LAB-ADMIN\\Documents\\GitHub\\broncho_MAS\\mas_log",
+  "run_dir": "C:\\Users\\LAB-ADMIN\\Documents\\GitHub\\broncho_MAS\\mas_log\\20260322_152552_311474"
+}

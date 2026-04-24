@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections import Counter, deque
 from typing import Any, Deque, Dict, List, Optional, Tuple
 
+from . import classify_anatomical_relationship, normalize_airway_code
+
 
 # -----------------------------
 # Constants
@@ -39,10 +41,56 @@ def _plan_view(plan: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         "mode": _safe_str(plan.get("mode")),
         "next_airway": _safe_str(plan.get("next_airway")),
         "anchor_landmark": _safe_str(plan.get("anchor_landmark")),
+        "transition_type": _safe_str(plan.get("transition_type")),
+        "reanchor_target": _safe_str(plan.get("reanchor_target")),
+        "route": list(plan.get("route", []) or []),
         "recognition_cue": _safe_str(plan.get("recognition_cue")),
         "micro_steps": list(plan.get("micro_steps", []) or []),
         "why": _safe_str(plan.get("why")),
     }
+
+
+def _route_inconsistency_flag(
+    *,
+    position: str,
+    target: str,
+    planned_next: str,
+    plan_view: Dict[str, Any],
+) -> bool:
+    pos = normalize_airway_code(position)
+    tgt = normalize_airway_code(target)
+    nxt = normalize_airway_code(planned_next)
+    transition_type = _safe_str(plan_view.get("transition_type")).lower()
+    planned_mode = _safe_str(plan_view.get("mode")).lower()
+    reanchor_target = normalize_airway_code(plan_view.get("reanchor_target"))
+    route = [normalize_airway_code(x) for x in (plan_view.get("route") or []) if normalize_airway_code(x)]
+
+    if not pos or not nxt:
+        return False
+    if planned_mode in {"reorient", "locate", "backtrack", "done"}:
+        return False
+
+    relationship = classify_anatomical_relationship(pos, nxt)
+
+    if transition_type == "local_sibling":
+        return relationship in {"cross_main_bronchus", "cross_side", "regional_branch_change"}
+
+    if transition_type == "regional_reanchor":
+        valid_positions = set(route + [nxt, reanchor_target])
+        if pos in valid_positions:
+            return False
+        return relationship in {"cross_main_bronchus", "cross_side"}
+
+    if transition_type == "global_reanchor":
+        return False
+
+    if route and pos not in set(route + [nxt]):
+        return relationship in {"cross_main_bronchus", "cross_side"}
+
+    if pos == nxt and tgt and normalize_airway_code(tgt) != pos:
+        return True
+
+    return False
 
 
 def _estimate_bbox_center_norm(frame: Dict[str, Any]) -> Optional[Tuple[float, float]]:
@@ -104,14 +152,14 @@ def _position_sentence(target: str, bbox_center_norm: Optional[Tuple[float, floa
 
 def _movement_sentence_from_velocity(velocity: Any, target: str = "") -> str:
     """
-    Lightweight wording from m_jointsVelRel ~ [rotation, knob, insertion]
+    Lightweight wording from m_jointsVelRel ~ [bend, rotation, insertion]
     """
     if not isinstance(velocity, (list, tuple)) or len(velocity) < 3:
         return ""
 
     try:
-        rot = float(velocity[0] or 0.0)
-        knob = float(velocity[1] or 0.0)
+        knob = float(velocity[0] or 0.0)
+        rot = float(velocity[1] or 0.0)
         ins = float(velocity[2] or 0.0)
     except Exception:
         return ""
@@ -185,6 +233,39 @@ class EventSignalEngine:
 
         self.motion_hist: Deque[float] = deque(maxlen=int(flow_mem))
         self.target_hist: Deque[str] = deque(maxlen=20)
+        self._step_index: int = 0
+        self._last_emitted_step: Dict[str, int] = {}
+        self._last_anchor_signature: str = ""
+        self._last_anchor_step: int = -10_000
+        self._last_invisible_signature: str = ""
+        self._last_invisible_step: int = -10_000
+
+    # -------------------------
+    # Emit suppression helpers
+    # -------------------------
+
+    def _emit_allowed(self, signature: str, *, cooldown_steps: int) -> bool:
+        last_step = self._last_emitted_step.get(signature, -10_000)
+        return (self._step_index - last_step) > int(cooldown_steps)
+
+    def _mark_emitted(self, signature: str) -> None:
+        self._last_emitted_step[signature] = self._step_index
+
+    def _anchor_emit_allowed(self, position: str, target: str, planned_next: str) -> bool:
+        signature = f"{_safe_upper(position)}|{_safe_upper(target)}|{_safe_upper(planned_next)}"
+        if signature == self._last_anchor_signature and (self._step_index - self._last_anchor_step) <= 8:
+            return False
+        self._last_anchor_signature = signature
+        self._last_anchor_step = self._step_index
+        return True
+
+    def _invisible_emit_allowed(self, position: str, target: str, planned_next: str) -> bool:
+        signature = f"{_safe_upper(position)}|{_safe_upper(target)}|{_safe_upper(planned_next)}"
+        if signature == self._last_invisible_signature and (self._step_index - self._last_invisible_step) <= 6:
+            return False
+        self._last_invisible_signature = signature
+        self._last_invisible_step = self._step_index
+        return True
 
     # -------------------------
     # Flag detection
@@ -195,6 +276,7 @@ class EventSignalEngine:
         frame: Dict[str, Any],
         plan: Optional[Dict[str, Any]] = None,
     ) -> Tuple[bool, Dict[str, Any]]:
+        self._step_index += 1
         plan_view = _plan_view(plan)
 
         target = _safe_str(frame.get("current_target"))
@@ -209,31 +291,44 @@ class EventSignalEngine:
 
         # 6 = explicit backtrack
         if target.lower() == "back" or planned_mode.lower() == "backtrack":
-            if self.flag != 6:
-                self.flag = 6
+            self.flag = 6
+            signature = f"flag6|{_safe_upper(position)}|{_safe_upper(planned_next)}|{_safe_upper(anchor_landmark:=plan_view.get('anchor_landmark',''))}"
+            if self._emit_allowed(signature, cooldown_steps=8):
                 need_event = True
+                self._mark_emitted(signature)
             return need_event, {"flag": self.flag, "ema": self.ema_score}
 
         # 1 = at anchor/waypoint
         if target and _safe_upper(target) == _safe_upper(position) and _safe_upper(position) in ANCHOR_POSITIONS:
-            if self.flag != 1:
-                self.flag = 1
+            if planned_next and _safe_upper(planned_next) != _safe_upper(position) and not just_reached:
+                self.flag = 0
+                return need_event, {"flag": self.flag, "ema": self.ema_score}
+            self.flag = 1
+            signature = f"flag1|{_safe_upper(position)}|{_safe_upper(target)}|{_safe_upper(planned_next)}"
+            if self._emit_allowed(signature, cooldown_steps=10) and self._anchor_emit_allowed(position, target, planned_next):
                 need_event = True
+                self._mark_emitted(signature)
             return need_event, {"flag": self.flag, "ema": self.ema_score}
 
         # 2 = explicit completion event
         if just_reached:
-            if self.flag != 2:
-                self.flag = 2
+            self.flag = 2
+            signature = f"flag2|{_safe_upper(position)}|{_safe_upper(planned_next)}|{len(frame.get('reached_regions', []) or [])}"
+            if self._emit_allowed(signature, cooldown_steps=2):
                 need_event = True
+                self._mark_emitted(signature)
             return need_event, {"flag": self.flag, "ema": self.ema_score}
 
         # 3 = target invisible / lost
         bbox_center = _estimate_bbox_center_norm(frame)
-        if target and bbox_center is None:
-            if self.flag != 3:
-                self.flag = 3
+        explicit_visible = frame.get("is_target_visible", None)
+        target_missing = (explicit_visible is False) or (explicit_visible is None and bbox_center is None)
+        if target and target_missing:
+            self.flag = 3
+            signature = f"flag3|{_safe_upper(position)}|{_safe_upper(target)}|{_safe_upper(planned_next)}"
+            if self._emit_allowed(signature, cooldown_steps=7) and self._invisible_emit_allowed(position, target, planned_next):
                 need_event = True
+                self._mark_emitted(signature)
             return need_event, {"flag": self.flag, "ema": self.ema_score}
 
         # 4 / 5 / 0 = transition stability logic
@@ -250,17 +345,26 @@ class EventSignalEngine:
 
         # drift / unstable recent dynamics
         if self.ema_score < self.drift_thresh:
-            if self.flag != 5:
-                self.flag = 5
+            self.flag = 5
+            signature = f"flag5|{_safe_upper(position)}|{_safe_upper(target)}|{_safe_upper(planned_next)}"
+            if self._emit_allowed(signature, cooldown_steps=6):
                 need_event = True
+                self._mark_emitted(signature)
             return need_event, {"flag": self.flag, "ema": self.ema_score}
 
-        # unusual transition heuristic
+        # route inconsistency heuristic
         if position and planned_next and target:
-            if _safe_upper(position) == _safe_upper(planned_next) and _safe_upper(target) != _safe_upper(position):
-                if self.flag != 4:
-                    self.flag = 4
+            if _route_inconsistency_flag(
+                position=position,
+                target=target,
+                planned_next=planned_next,
+                plan_view=plan_view,
+            ):
+                self.flag = 4
+                signature = f"flag4|{_safe_upper(position)}|{_safe_upper(target)}|{_safe_upper(planned_next)}"
+                if self._emit_allowed(signature, cooldown_steps=6):
                     need_event = True
+                    self._mark_emitted(signature)
                 return need_event, {"flag": self.flag, "ema": self.ema_score}
 
         # otherwise normal
@@ -286,6 +390,8 @@ class EventSignalEngine:
         planned_next = plan_view.get("next_airway", "") or next_destination
         planned_mode = plan_view.get("mode", "")
         anchor_landmark = plan_view.get("anchor_landmark", "")
+        transition_type = plan_view.get("transition_type", "")
+        reanchor_target = plan_view.get("reanchor_target", "")
 
         if flag == 1:
             if position:
@@ -319,11 +425,21 @@ class EventSignalEngine:
 
         if flag == 4:
             if position and target:
+                if transition_type == "local_sibling" and planned_next:
+                    return (
+                        f"The current airway '{position}' is inconsistent with a local move toward '{planned_next}', "
+                        "so the student likely left the intended airway family and needs corrective guidance."
+                    )
+                if transition_type == "regional_reanchor" and reanchor_target:
+                    return (
+                        f"The current airway '{position}' is outside the expected route toward '{planned_next}'. "
+                        f"Re-anchor at '{reanchor_target}' before continuing."
+                    )
                 return (
-                    f"The transition from '{position}' to target '{target}' appears unusual, "
+                    f"The current airway '{position}' is inconsistent with the planned route toward '{target}', "
                     "so the student needs corrective guidance."
                 )
-            return "The current transition appears unusual and may represent a wrong path; corrective guidance is needed."
+            return "The current airway is inconsistent with the planned route, so corrective guidance is needed."
 
         if flag == 5:
             if planned_mode:
@@ -362,6 +478,8 @@ class EventSignalEngine:
         plan_view = _plan_view(plan)
 
         target = _safe_str(current_data.get("current_target"))
+        training_target = _safe_str(current_data.get("training_target"))
+        waypoint_target = _safe_str(current_data.get("waypoint_target"))
         position = _safe_str(current_data.get("anatomical_position"))
         next_dest = _safe_str(current_data.get("next_destination"))
         just_reached = _bool(current_data.get("just_reached", False))
@@ -376,11 +494,12 @@ class EventSignalEngine:
         plan_why = plan_view.get("why", "")
 
         route_sentence = ""
-        if position and planned_next and target:
+        if position and planned_next:
             route_sentence = (
-                f'the student is currently at {position}, the next lumen to be explored is "{planned_next}", '
-                f'and to reach there the student has to go through "{target}" first.'
+                f'the student is currently at {position}, and the next lumen to be explored is "{planned_next}".'
             )
+            if waypoint_target and _safe_upper(waypoint_target) != _safe_upper(planned_next):
+                route_sentence += f' use "{waypoint_target}" only as a waypoint or re-anchor step if needed.'
         elif position:
             route_sentence = f"the student is currently at {position}."
 
@@ -400,7 +519,11 @@ class EventSignalEngine:
 
         praise = ""
         if just_reached:
-            praise = f"the student just reached {position or planned_next or target}, and should be praised."
+            position_upper = _safe_upper(position)
+            if position_upper and position_upper.startswith(("RB", "LB")):
+                praise = f"the student just reached {position}, so acknowledge the arrival first and then give the next instruction."
+            elif position and waypoint_target and _safe_upper(waypoint_target) == position_upper:
+                praise = f"the student is at waypoint {position}; acknowledge it briefly without praise and continue toward \"{planned_next or training_target or target}\"."
 
         encourage = ""
         if history and len(history) >= 15:
@@ -422,9 +545,9 @@ class EventSignalEngine:
         )
 
         remaining_sentence = (
-            f"the following areas are waited to be examed: {', '.join(x.lower() for x in remaining)}."
+            f"the following areas still need to be examined: {', '.join(x.lower() for x in remaining)}."
             if remaining else
-            "All the target region has been reached, the student did a good job and should be praised."
+            "All target regions have been reached, and the student should be praised."
         )
 
         location_sentence = _position_sentence(target, _estimate_bbox_center_norm(current_data))

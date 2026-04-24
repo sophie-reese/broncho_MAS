@@ -19,6 +19,14 @@ import time
 from typing import Any, Dict, List, Optional, Union
 
 from smolagents import CodeAgent, ToolCallingAgent
+from ..shared.state_normalization import (
+    build_current_situation_from_state,
+    extract_block,
+    extract_m_joints_vel_rel,
+    extract_reached_regions,
+    normalize_runtime_payload,
+)
+from ..shared.utterance_postprocess import normalize_agent_utterance
 
 # --- import compatibility layer ---
 try:
@@ -206,7 +214,7 @@ def _coerce_instructor_result(raw: Any) -> Dict[str, Any]:
     }
 
 
-class MultiAgentManager:
+class MASManager:
     """Bronchoscopy MAS manager with shared logging + shared event signal."""
 
     AIRWAY_VISIT_ORDER: List[str] = [
@@ -266,13 +274,13 @@ class MultiAgentManager:
         self.logger = RunLogger(
             log_root=log_root,
             session_id=session_id,
-            pipeline="research",
+            pipeline="mas",
         )
         self._write_run_meta()
 
         print(
-            f"[broncho_mas manager] version=0.0.4-research "
-            f"research_mode=agentic provider={os.environ.get('BRONCHO_PROVIDER', 'hf')} "
+            f"[broncho_mas manager] version=0.0.5-mas "
+            f"mas_mode=agentic provider={os.environ.get('BRONCHO_PROVIDER', 'hf')} "
             f"model={os.environ.get('BRONCHO_MODEL', '')}"
         )
 
@@ -290,9 +298,9 @@ class MultiAgentManager:
                 {
                     "schema": "broncho.meta.v2",
                     "system_family": "broncho_mas",
-                    "pipeline": "research",
-                    "manager": "MultiAgentManager",
-                    "broncho_mas_version": "0.0.4-research",
+                    "pipeline": "mas",
+                    "manager": "MASManager",
+                    "broncho_mas_version": "0.0.5-mas",
                     "provider": os.environ.get("BRONCHO_PROVIDER", "hf"),
                     "model": os.environ.get("BRONCHO_MODEL", ""),
                     "tool_choice": os.environ.get("BRONCHO_TOOL_CHOICE", ""),
@@ -304,7 +312,7 @@ class MultiAgentManager:
                 }
             )
         except Exception as exc:
-            print(f"[research] failed to write meta: {exc}")
+            print(f"[mas] failed to write meta: {exc}")
 
     def _log_error(self, where: str, exc: Exception, extra: Optional[Dict[str, Any]] = None) -> None:
         try:
@@ -317,7 +325,7 @@ class MultiAgentManager:
                 payload["extra"] = extra
             self.logger.append_error(payload)
         except Exception as log_exc:
-            print(f"[research] failed to log error: {log_exc}")
+            print(f"[mas] failed to log error: {log_exc}")
 
     def _log_note(self, message: str, extra: Optional[Dict[str, Any]] = None) -> None:
         try:
@@ -326,7 +334,7 @@ class MultiAgentManager:
                 payload["extra"] = extra
             self.logger.append_timeline(payload)
         except Exception as exc:
-            print(f"[research] failed to log note: {exc}")
+            print(f"[mas] failed to log note: {exc}")
 
     def _make_engine(self):
         if _SharedCurriculumEngine is not None:
@@ -400,7 +408,7 @@ class MultiAgentManager:
         event_packet: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         return {
-            "schema": "statepacket.research.v2",
+            "schema": "statepacket.mas.v2",
             "current_situation": current_situation,
             "previous_msgs": previous_msgs,
             "student_question": student_question,
@@ -417,7 +425,7 @@ class MultiAgentManager:
             "event_packet": event_packet or {},
             "raw_payload": raw_payload or {},
             "meta": {
-                "broncho_mas_version": "0.0.4-research",
+                "broncho_mas_version": "0.0.5-mas",
                 "provider": os.environ.get("BRONCHO_PROVIDER", "hf"),
                 "model": os.environ.get("BRONCHO_MODEL", ""),
             },
@@ -577,8 +585,7 @@ class MultiAgentManager:
             if s not in cleaned:
                 cleaned.append(s)
 
-        out = " ".join(cleaned).strip()
-        out = re.sub(r"\s+", " ", out).strip()
+        out = normalize_agent_utterance(" ".join(cleaned).strip())
         bad = ["submit_guidance", "guidance delivered", "student instructed to", "'function'", '"function"', "'arguments'", '"arguments"']
         if not out or any(b in out.lower() for b in bad):
             return self._deterministic_guidance_fallback(curriculum_progress, landmark_hint, auth_plan)
@@ -676,68 +683,35 @@ class MultiAgentManager:
             "raw_current_situation": current_situation,
         }
 
-    def _extract_control_triplet(self, text: str) -> Optional[List[float]]:
-        s = str(text or "")
-        patterns = [
-            r"m_jointsVelRel\s*[:=]\s*(\[[^\]]+\])",
-            r"joints_vel_rel\s*[:=]\s*(\[[^\]]+\])",
-            r"control_triplet\s*[:=]\s*(\[[^\]]+\])",
-        ]
-        for pat in patterns:
-            m = re.search(pat, s, flags=re.I)
-            if not m:
-                continue
-            chunk = m.group(1)
-            for parser in (json.loads, ast.literal_eval):
-                try:
-                    val = parser(chunk)
-                    if isinstance(val, (list, tuple)) and len(val) >= 3:
-                        return [float(val[0]), float(val[1]), float(val[2])]
-                except Exception:
-                    pass
-        return None
+    def _extract_m_jointsVelRel(self, text: str) -> Optional[List[float]]:
+        velocity = extract_m_joints_vel_rel(text)
+        return velocity if velocity != [0.0, 0.0, 0.0] else None
 
     def _extract_block(self, prompt: str, header: str) -> str:
-        if not prompt:
-            return ""
-        marker = f"{header}:"
-        idx = prompt.find(marker)
-        if idx == -1:
-            return ""
-        tail = prompt[idx + len(marker) :]
-        m = re.search(r"\n[A-Z_]+:\s*\n", tail)
-        if m:
-            return tail[: m.start()].strip()
-        return tail.strip()
+        return extract_block(prompt, header)
 
     def _extract_reached_regions(self, current_situation: str) -> List[str]:
-        text = current_situation or ""
-        patterns = [
-            r"reached_regions\(last\)\s*=\s*(\[[^\]]*\])",
-            r"REACHED_REGIONS\s*:\s*(\[[^\]]*\])",
-            r"reached_regions\s*:\s*(\[[^\]]*\])",
-            r"timeline_reached\s*:\s*(\[[^\]]*\])",
-            r"regions_seen\s*:\s*(\[[^\]]*\])",
-        ]
-        for pat in patterns:
-            m = re.search(pat, text)
-            if not m:
-                continue
-            chunk = m.group(1)
-            for parser in (json.loads, ast.literal_eval):
-                try:
-                    val = parser(chunk)
-                    if isinstance(val, list):
-                        return [str(x) for x in val]
-                except Exception:
-                    pass
-        return []
+        return extract_reached_regions(current_situation, allowed=self.AIRWAY_VISIT_ORDER)
 
-    def run(self, prompt: str) -> Dict[str, Any]:
+    def _payload_to_prompt(self, payload: Dict[str, Any]) -> str:
+        state = normalize_runtime_payload(payload, self.AIRWAY_VISIT_ORDER)
+        current_situation = build_current_situation_from_state(state)
+        prompt = f"CURRENT_SITUATION: {current_situation}".strip()
+        if state.get("previous_msgs"):
+            prompt += f"\n\nPREVIOUS_MSGS: {state['previous_msgs']}"
+        if state.get("student_question"):
+            prompt += f"\n\nSTUDENT_QUESTION: {state['student_question']}"
+        return prompt
+
+    def run(self, prompt: Any) -> Dict[str, Any]:
         t0 = time.time()
         self._turn_idx += 1
 
         try:
+            source_mode = "payload" if isinstance(prompt, dict) else "legacy_prompt"
+            if isinstance(prompt, dict):
+                prompt = self._payload_to_prompt(prompt)
+
             current_situation = self._extract_block(prompt, "CURRENT_SITUATION")
             previous_msgs = self._extract_block(prompt, "PREVIOUS_MSGS")
             student_question = self._extract_block(prompt, "STUDENT_QUESTION")
@@ -835,11 +809,11 @@ class MultiAgentManager:
                     self._log_error("event_engine.step", exc)
                     event_packet = {}
 
-            control_triplet = self._extract_control_triplet(current_situation + "\n" + student_question)
-            if control_triplet is not None:
+            m_jointsVelRel = self._extract_m_jointsVelRel(current_situation + "\n" + student_question)
+            if m_jointsVelRel is not None:
                 try:
                     hint = self.directional_builder.build(
-                        control_triplet,
+                        m_jointsVelRel,
                         event_flag=event_packet.get("flag") if isinstance(event_packet, dict) else None,
                     )
                     auth_plan_json["directional_hint"] = hint.to_dict()
@@ -1041,10 +1015,13 @@ class MultiAgentManager:
             except Exception as exc:
                 self._log_error("logger.log_llm_call", exc)
 
-            print("[research] final ui_text =", repr(ui_text))
+            print("[mas] final ui_text =", repr(ui_text))
 
             return {
                 "ui_text": ui_text,
+                "instructor": ui_text,
+                "utterance_full": ui_text,
+                "llm_utterance_full": best_utterance,
                 "needs_visual_guidance": bool(instr_json.get("needs_visual_guidance", False)),
                 "statistics": stats_valid,
                 "curriculum_progress": cp,
@@ -1053,15 +1030,23 @@ class MultiAgentManager:
                 "statepacket": statepacket,
                 "event_packet": event_packet,
                 "raw": {
+                    "source_mode": source_mode,
+                    "prompt": prompt,
+                    "current_situation": current_situation,
                     "stats_raw": stats_raw,
                     "instr_raw": instr_raw,
                     "orchestrator_raw": plan_raw,
                 },
             }
         except Exception as exc:
-            self._log_error("MultiAgentManager.run", exc)
+            self._log_error("MASManager.run", exc)
             raise
 
+    def step(self, payload: Any) -> Dict[str, Any]:
+        return self.run(payload)
+
+    def __call__(self, payload: Any) -> Dict[str, Any]:
+        return self.run(payload)
     def get_report(self, recording_dir: str) -> str:
         if not recording_dir or not os.path.exists(recording_dir):
             return "Error: Recording directory not found."
@@ -1114,3 +1099,6 @@ class MultiAgentManager:
         )
 
         return str(self.report_agent.run(prompt))
+
+
+MultiAgentManager = MASManager

@@ -3,6 +3,19 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Sequence, Set
 
+from . import (
+    airway_path_to_root,
+    classify_anatomical_relationship,
+    get_airway_info,
+    nearest_shared_ancestor,
+    normalize_airway_code,
+)
+
+DEFAULT_AIRWAY_VISIT_ORDER: tuple[str, ...] = (
+    "RB1", "RB2", "RB3", "RB4", "RB5", "RB6", "RB7", "RB8", "RB9", "RB10",
+    "LB1+2", "LB3", "LB4", "LB5", "LB6", "LB8", "LB9", "LB10",
+)
+
 
 @dataclass(frozen=True)
 class LandmarkInfo:
@@ -38,6 +51,36 @@ class CurriculumEngine:
         "LMB",
         "RIGHT_MAIN_BRONCHUS",
         "LEFT_MAIN_BRONCHUS",
+    }
+
+    FAMILY_MEMBERS = {
+        "right_upper_family": ["RB1", "RB2", "RB3"],
+        "right_upper_lobe": ["RB1", "RB2", "RB3"],
+        "right_middle_family": ["RB4", "RB5"],
+        "right_middle_lobe": ["RB4", "RB5"],
+        "right_lower_family": ["RB6", "RB7", "RB8", "RB9", "RB10"],
+        "right_lower_lobe": ["RB6", "RB7", "RB8", "RB9", "RB10"],
+        "left_upper_family": ["LB1+2", "LB3"],
+        "left_upper_division": ["LB1+2", "LB3"],
+        "lingula_family": ["LB4", "LB5"],
+        "lingula": ["LB4", "LB5"],
+        "left_lower_family": ["LB6", "LB8", "LB9", "LB10"],
+        "left_lower_lobe": ["LB6", "LB8", "LB9", "LB10"],
+    }
+
+    FAMILY_LABELS = {
+        "right_upper_family": "right upper family",
+        "right_upper_lobe": "right upper lobe",
+        "right_middle_family": "right middle family",
+        "right_middle_lobe": "right middle lobe",
+        "right_lower_family": "right lower family",
+        "right_lower_lobe": "right lower lobe",
+        "left_upper_family": "left upper family",
+        "left_upper_division": "left upper division",
+        "lingula_family": "lingula",
+        "lingula": "lingula",
+        "left_lower_family": "left lower family",
+        "left_lower_lobe": "left lower lobe",
     }
 
     def __init__(self, visit_order: Sequence[str]):
@@ -89,6 +132,98 @@ class CurriculumEngine:
             return False
         return a in self.visit_order_set or a in self.DEFAULT_KNOWN_ANCHORS
 
+    def family_for_airway(self, airway: str) -> str:
+        a = (airway or "").strip().upper()
+        info = get_airway_info(a)
+        if info and info.family:
+            return info.family
+        for family, members in self.FAMILY_MEMBERS.items():
+            if a in members:
+                return family
+        return ""
+
+    def family_members(self, family_name: str) -> List[str]:
+        return list(self.FAMILY_MEMBERS.get(str(family_name or "").strip(), []))
+
+    def family_label(self, family_name: str) -> str:
+        return self.FAMILY_LABELS.get(str(family_name or "").strip(), "")
+
+    def family_complete(self, reached: Set[str] | Sequence[str] | None, family_name: str) -> bool:
+        members = self.family_members(family_name)
+        if not members:
+            return False
+        reached_u = set(self.normalize_reached(reached))
+        return all(member in reached_u for member in members)
+
+    def right_lung_complete(self, reached: Set[str] | Sequence[str] | None) -> bool:
+        reached_u = set(self.normalize_reached(reached))
+        right_targets = [a for a in self.visit_order if a.startswith("RB")]
+        return bool(right_targets) and all(a in reached_u for a in right_targets)
+
+    def session_complete(self, reached: Set[str] | Sequence[str] | None) -> bool:
+        reached_u = set(self.normalize_reached(reached))
+        return bool(self.visit_order) and all(a in reached_u for a in self.visit_order)
+
+    def route_to_airway(self, airway: str, current_airway: str = "") -> List[str]:
+        a = normalize_airway_code(airway)
+        curr = normalize_airway_code(current_airway)
+        if not a:
+            return []
+
+        target_path = list(reversed(airway_path_to_root(a)))
+        target_path = [node for node in target_path if node != "TRACHEA"]
+        if not target_path:
+            return [a]
+        if not curr:
+            return target_path
+        if curr == a:
+            return [a]
+
+        shared = nearest_shared_ancestor(curr, a)
+        if shared and shared in target_path:
+            shared_index = target_path.index(shared)
+            # Include the shared local landmark when moving between sibling or
+            # same-family branches; exclude it when the scope is already there.
+            if curr == shared:
+                return target_path[shared_index + 1 :] or [a]
+            return target_path[shared_index:] or [a]
+
+        relationship = classify_anatomical_relationship(curr, a)
+        if relationship in {"cross_main_bronchus", "cross_side", "unknown"}:
+            return target_path
+
+        return [a]
+
+    def transition_context(self, current_airway: str, target_airway: str) -> Dict[str, str]:
+        curr = normalize_airway_code(current_airway)
+        target = normalize_airway_code(target_airway)
+        current_info = get_airway_info(curr)
+        target_info = get_airway_info(target)
+        relationship = classify_anatomical_relationship(curr, target)
+        shared = nearest_shared_ancestor(curr, target)
+
+        if relationship in {"sibling", "same_family"}:
+            transition_type = "local_sibling"
+        elif relationship in {"regional_branch_change", "ancestor_target", "descendant_target"}:
+            transition_type = "regional_reanchor"
+        elif relationship in {"cross_main_bronchus", "unknown"}:
+            transition_type = "global_reanchor"
+        else:
+            transition_type = "advance"
+
+        return {
+            "current_code": curr,
+            "target_code": target,
+            "current_label": current_info.label if current_info else curr,
+            "target_label": target_info.label if target_info else target,
+            "current_side": current_info.side if current_info else "",
+            "target_side": target_info.side if target_info else "",
+            "relationship": relationship,
+            "shared_ancestor": shared,
+            "shared_ancestor_label": get_airway_info(shared).label if shared and get_airway_info(shared) else shared,
+            "transition_type": transition_type,
+        }
+
     # ---------------- teaching primitives ----------------
     @staticmethod
     def neutral_pose() -> Dict[str, str]:
@@ -134,12 +269,12 @@ class CurriculumEngine:
                         "note": self.inspect_rule_text(),
                     }
                 ],
-                recognition_cue="Mercedes sign / trifurcation at the right upper lobe",
+                recognition_cue="the right upper-lobe trifurcation",
             )
 
         if a.startswith("RB"):
             return LandmarkInfo(
-                landmark_id="L3_RML_RLL",
+                landmark_id="L3_RIGHT_MIDDLE_LOWER",
                 recommended_angles=[
                     {
                         "angle": "45° right",
@@ -157,7 +292,7 @@ class CurriculumEngine:
 
         if a.startswith("LB"):
             return LandmarkInfo(
-                landmark_id="L4_LEFT",
+                landmark_id="L4_LEFT_MAIN",
                 recommended_angles=[
                     {
                         "angle": "90° left",
@@ -175,7 +310,7 @@ class CurriculumEngine:
                         "note": "Use Landmark 1 (carina) reset if orientation is lost.",
                     },
                 ],
-                recognition_cue="Left main bronchus takeoff: more horizontal course than the right; stable bifurcation landmarks",
+                recognition_cue="Left lung entry: stable left-sided orientation organizing upper lobe + lingula, segment 6, and lower lobe",
             )
 
         return LandmarkInfo(
@@ -187,7 +322,7 @@ class CurriculumEngine:
                     "note": "If orientation is lost, return here to reorient.",
                 }
             ],
-            recognition_cue="Carina bifurcation; symmetric right/left main bronchi",
+            recognition_cue="the carina with both main bronchi in view",
         )
 
     # ---------------- plan generation ----------------
@@ -213,12 +348,22 @@ class CurriculumEngine:
         requested = (requested_next_airway or "").strip().upper()
 
         nxt = requested or self.next_airway(reached_u)
+        transition = self.transition_context(curr, nxt)
+        route = self.route_to_airway(nxt, current_airway=curr)
+        family = self.family_for_airway(nxt)
+        family_label = self.family_label(family)
 
         if not nxt:
             return {
                 "mode": "done",
                 "current_airway": curr,
                 "next_airway": "",
+                "route": [],
+                "airway_family": "",
+                "family_label": "",
+                "transition_type": "done",
+                "anatomy_context": transition,
+                "reanchor_target": "",
                 "anchor_landmark": "L1_CARINA",
                 "recommended_angle": self.neutral_pose(),
                 "recognition_cue": "carina bifurcation",
@@ -232,9 +377,15 @@ class CurriculumEngine:
                 "mode": "backtrack",
                 "current_airway": curr,
                 "next_airway": nxt,
+                "route": route,
+                "airway_family": family,
+                "family_label": family_label,
+                "transition_type": "global_reanchor",
+                "anatomy_context": transition,
+                "reanchor_target": "CARINA",
                 "anchor_landmark": "L1_CARINA",
                 "recommended_angle": self.neutral_pose(),
-                "recognition_cue": "carina bifurcation; symmetric right/left main bronchi",
+                "recognition_cue": "the carina with both main bronchi in view",
                 "micro_steps": [
                     "Action: Withdraw 1–2 cm to widen the field of view. Check: lumen looks wider and more centered.",
                     "Action: Re-center the lumen. Check: the lumen stays concentric rather than sliding toward the wall.",
@@ -251,9 +402,15 @@ class CurriculumEngine:
                 "mode": "reorient",
                 "current_airway": curr,
                 "next_airway": nxt,
+                "route": route,
+                "airway_family": family,
+                "family_label": family_label,
+                "transition_type": "global_reanchor",
+                "anatomy_context": transition,
+                "reanchor_target": "CARINA",
                 "anchor_landmark": "L1_CARINA",
                 "recommended_angle": self.neutral_pose(),
-                "recognition_cue": "carina bifurcation; symmetric main bronchi",
+                "recognition_cue": "the carina with both main bronchi in view",
                 "micro_steps": [
                     "Action: Re-anchor at Landmark 1 (carina) and reset to neutral. Check: carina centered; right and left main bronchi open symmetrically.",
                     f"Action: Use the access orientation(s): {access_line}. Check: the target view becomes stable before advancing.",
@@ -270,6 +427,12 @@ class CurriculumEngine:
             "mode": "advance",
             "current_airway": curr,
             "next_airway": nxt,
+            "route": route,
+            "airway_family": family,
+            "family_label": family_label,
+            "transition_type": transition.get("transition_type", "advance"),
+            "anatomy_context": transition,
+            "reanchor_target": transition.get("shared_ancestor", ""),
             "anchor_landmark": tgt.landmark_id,
             "recommended_angle": {
                 "access_orientations": tgt.recommended_angles,

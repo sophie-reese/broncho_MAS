@@ -8,27 +8,44 @@ def _select_pipeline() -> str:
     return (os.environ.get("BRONCHO_PIPELINE") or "runtime").strip().lower()
 
 
+def _strict_pipeline_mode() -> bool:
+    return str(os.environ.get("BRONCHO_STRICT_PIPELINE", "1")).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _allow_pipeline_fallback() -> bool:
+    return str(os.environ.get("BRONCHO_ENABLE_PIPELINE_FALLBACK", "")).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _warn_fallback(message: str, exc: Exception) -> None:
+    detail = f"{type(exc).__name__}: {exc}"
+    print(f"[broncho_mas.adapter] {message}: {detail}")
+
+
 def _build_manager(model_name: str):
     pipeline = _select_pipeline()
 
     if pipeline in {"research", "mas"}:
-        from .research.manager import MultiAgentManager  # type: ignore
-        return MultiAgentManager(model_name=model_name)
+        from .mas.manager import MASManager  # type: ignore
+        return MASManager(model_name=model_name)
+
+    if pipeline == "sas":
+        from .sas.manager import SASManager  # type: ignore
+        return SASManager(model_name=model_name)
 
     if pipeline == "runtime":
         try:
-            from .runtime.runtime_manager import RuntimeManager  # type: ignore
+            from .runtime.manager import RuntimeManager  # type: ignore
             return RuntimeManager(model_name=model_name)
-        except Exception:
-            from .research.manager import MultiAgentManager  # type: ignore
-            return MultiAgentManager(model_name=model_name)
+        except Exception as exc:
+            if _allow_pipeline_fallback() and not _strict_pipeline_mode():
+                _warn_fallback("runtime pipeline failed, falling back to MAS", exc)
+                from .mas.manager import MASManager  # type: ignore
+                return MASManager(model_name=model_name)
+            raise
 
-    try:
-        from .runtime.runtime_manager import RuntimeManager  # type: ignore
-        return RuntimeManager(model_name=model_name)
-    except Exception:
-        from .research.manager import MultiAgentManager  # type: ignore
-        return MultiAgentManager(model_name=model_name)
+    raise ValueError(
+        f"Unknown BRONCHO_PIPELINE='{pipeline}'. Expected one of: runtime, mas, research, sas."
+    )
 
 
 class SmolAgentsLLM:
@@ -51,6 +68,7 @@ class SmolAgentsLLM:
         self.model_name = model_name
         self.temperature = temperature
         self.max_tokens = max_tokens
+        self.active_pipeline = _select_pipeline()
         self.manager = _build_manager(model_name=model_name)
         self._payload_for_next_call: Optional[Dict[str, Any]] = None
 
@@ -59,42 +77,46 @@ class SmolAgentsLLM:
         self._payload_for_next_call = None
         return payload if isinstance(payload, dict) else None
 
-    def _run_payload(self, payload: Dict[str, Any]) -> Any:
+    def _invoke_manager(self, payload: Any) -> Any:
         if hasattr(self.manager, "step"):
             return self.manager.step(payload)
-        if hasattr(self.manager, "run"):
-            return self.manager.run(payload)
         raise AttributeError(
-            f"Active manager {type(self.manager).__name__} exposes neither "
-            f"step(payload) nor run(payload)."
-        )
-
-    def _run_prompt(self, prompt: str) -> Any:
-        if hasattr(self.manager, "run"):
-            return self.manager.run(prompt)
-        if hasattr(self.manager, "step"):
-            return self.manager.step(prompt)
-        raise AttributeError(
-            f"Active manager {type(self.manager).__name__} exposes neither "
-            f"run(prompt) nor step(prompt)."
+            f"Active manager {type(self.manager).__name__} must expose step(payload)."
         )
 
     @staticmethod
     def _normalize_result(result: Any) -> Dict[str, Any]:
         if isinstance(result, dict):
             out = dict(result)
-            out["ui_text"] = str(out.get("ui_text", "")).strip()
+            ui_text = str(
+                out.get("ui_text")
+                or out.get("instructor")
+                or out.get("utterance_full")
+                or out.get("llm_utterance_full")
+                or out.get("deterministic_utterance_full")
+                or ""
+            ).strip()
+            out["ui_text"] = ui_text
+
+            raw = out.get("raw") if isinstance(out.get("raw"), dict) else {}
+            if raw:
+                for key in ("llm_ui", "deterministic_ui", "used_fallback_backend", "llm_called"):
+                    out.setdefault(key, raw.get(key))
+                state = raw.get("normalized_state") if isinstance(raw.get("normalized_state"), dict) else {}
+                if state:
+                    for key in ("need_llm", "llm_trigger_flag", "llm_reason", "soft_prompt"):
+                        out.setdefault(key, state.get(key))
             return out
         return {"ui_text": str(result).strip()}
 
     def ask(self, prompt: str) -> str:
         payload = self._pop_next_payload()
-        result = self._run_payload(payload) if payload is not None else self._run_prompt(prompt)
+        result = self._invoke_manager(payload if payload is not None else prompt)
         return self._normalize_result(result)["ui_text"]
 
     def ask_structured(self, prompt: str) -> Dict[str, Any]:
         payload = self._pop_next_payload()
-        result = self._run_payload(payload) if payload is not None else self._run_prompt(prompt)
+        result = self._invoke_manager(payload if payload is not None else prompt)
         return self._normalize_result(result)
 
     def generate(self, prompt: str) -> Dict[str, Any]:
@@ -107,6 +129,5 @@ class SmolAgentsLLM:
         if hasattr(self.manager, "get_report"):
             return self.manager.get_report(recording_dir=recording_dir)
         raise NotImplementedError(
-            "The active runtime manager does not implement get_report(). "
-            "Set BRONCHO_PIPELINE=research for report generation."
+            f"The active pipeline '{self.active_pipeline}' does not implement get_report()."
         )

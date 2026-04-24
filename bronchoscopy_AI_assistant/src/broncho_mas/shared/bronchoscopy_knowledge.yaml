@@ -1,0 +1,1026 @@
+reference_sources:
+  jove_four_landmarks_2023:
+    title: "Systematic Bronchoscopy: the Four Landmarks Approach"
+    url: https://www.jove.com/t/65358/systematic-bronchoscopy-the-four-landmarks-approach
+  bronchoscopy_anatomy_review_2017:
+    title: Anatomical considerations in bronchoscopy
+    url: https://pmc.ncbi.nlm.nih.gov/articles/PMC5696545/
+  tracheobronchial_tree_review_2016:
+    title: Surgical anatomy of the tracheobronchial tree
+    url: https://pmc.ncbi.nlm.nih.gov/articles/PMC4775257/
+  pulmonary_segment_overview_2018:
+    title: Pulmonary vascular anatomy and anatomical variants
+    url: https://pmc.ncbi.nlm.nih.gov/articles/PMC6039811/
+  merck_bronchoscopy_overview:
+    title: Bronchoscopy overview
+    url: https://www.merckmanuals.com/en-ca/professional/pulmonary-disorders/diagnostic-and-therapeutic-pulmonary-procedures/bronchoscopy
+
+
+airways:
+- id: TRACHEA
+  aliases:
+  - TRACHEA
+  definition: trachea
+  kind: airway
+  side: ''
+  parent: null
+  children:
+  - CARINA
+  family: null
+  recognition_cues:
+  - Ovoid lumen with C-shaped cartilaginous rings on the anterior and lateral walls
+  - Flatter membranous posterior wall that helps maintain orientation
+  - Lumen narrows slightly as the scope approaches the carina
+  pitfalls:
+  - Losing the posterior membranous wall and rotating without realizing it
+  - Calling the trachea a bronchus before the main bifurcation is seen
+  reanchor_point: CARINA
+  teaching_fact: The trachea is the straight approach corridor to the carina. In bronchoscopy, use the cartilaginous anterior
+    wall and flatter posterior membranous wall to stay oriented.
+  repair_hint: Pull back until the tracheal rings and posterior membranous wall are clear, then advance to the carina again.
+  quiz_prompt: What two wall features help you know you are still in the trachea?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - merck_bronchoscopy_overview
+- id: CARINA
+  aliases:
+  - CARINA
+  - MAIN CARINA
+  definition: carina
+  kind: landmark
+  side: ''
+  parent: TRACHEA
+  children:
+  - RMB
+  - LMB
+  family: null
+  recognition_cues:
+  - Sharp cartilaginous spur separating the two main bronchi
+  - Both main bronchi visible at once, with the right side shorter and steeper and the left side longer and flatter
+  - Reliable reset landmark for switching sides or recovering orientation
+  pitfalls:
+  - Mistaking a distal lobar bifurcation for the main carina
+  - Ignoring a blunted, widened, or distorted carina that may reflect subcarinal disease or proximal airway distortion
+  reanchor_point: CARINA
+  teaching_fact: The carina is the main tracheal bifurcation. In a normal bronchoscopic view, the spur is sharp, with a short,
+    steeper right main bronchus and a longer, flatter left main bronchus.
+  repair_hint: Re-center until the full spur is sharp and both main bronchi are visible before choosing right or left.
+  quiz_prompt: What makes the true carina different from a distal branch point?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - tracheobronchial_tree_review_2016
+- id: RMB
+  aliases:
+  - RIGHT BRONCHUS
+  - RIGHT MAIN
+  - RIGHT MAIN BRONCHUS
+  - RIGHT_MAIN_BRONCHUS
+  - RMB
+  definition: right main bronchus
+  kind: main_bronchus
+  side: right
+  parent: CARINA
+  children:
+  - RUL
+  - BI
+  family: null
+  recognition_cues:
+  - Shorter, wider, more vertical continuation from the carina
+  - Right upper lobe takeoff appears early; beyond that point the airway is BI
+  pitfalls:
+  - Calling BI the right main bronchus after the RUL takeoff
+  - Passing the early upper-lobe takeoff without recognizing it
+  reanchor_point: CARINA
+  teaching_fact: The right main bronchus is short and steep. Its key bronchoscopic job is to show you the early RUL takeoff,
+    then hand you into BI.
+  repair_hint: Return to the carina, enter the short right main, and identify the first upper-lobe takeoff before moving farther
+    distally.
+  quiz_prompt: What event tells you the right main bronchus is ending and BI is beginning?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - tracheobronchial_tree_review_2016
+- id: RUL
+  aliases:
+  - RIGHT UPPER LOBE
+  - RIGHT UPPER LOBE BRONCHUS
+  - RUL
+  definition: right upper lobe bronchus
+  kind: lobar_bronchus
+  side: right
+  parent: RMB
+  children:
+  - RB1
+  - RB2
+  - RB3
+  family: right_upper_lobe
+  recognition_cues:
+  - Three-way trifurcation, often taught as a cloverleaf or Mercedes-sign view
+  - Apical, posterior, and anterior segmental branches arise from the same upper-lobe checkpoint
+  pitfalls:
+  - Treating the RUL trifurcation as the carina
+  - Leaving the trifurcation too early instead of inspecting the family locally
+  reanchor_point: RUL
+  teaching_fact: The right upper lobe bronchus is the classic trifurcation view. Once that cloverleaf pattern is stable, stay
+    local and sort RB1, RB2, and RB3 rather than backing out.
+  repair_hint: Re-anchor at the trifurcation and rebuild the three-branch view before naming RB1, RB2, or RB3.
+  quiz_prompt: What visual pattern tells you this is the RUL trifurcation?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - tracheobronchial_tree_review_2016
+- id: BI
+  aliases:
+  - BI
+  - BRONCHUS INTERMEDIUS
+  - BRONCHUS_INTERMEDIUS
+  - INTERMEDIUS
+  definition: bronchus intermedius
+  kind: intermediate_bronchus
+  side: right
+  parent: RMB
+  children:
+  - RML
+  - RLL
+  family: null
+  recognition_cues:
+  - Smooth continuation beyond the RUL takeoff
+  - RML and RLL routes separate distally from this tube
+  pitfalls:
+  - Calling BI the right main bronchus
+  - Dropping into lower-lobe branches before confirming the middle-lobe takeoff
+  reanchor_point: RMB
+  teaching_fact: BI is the right-sided corridor after the RUL takeoff. Use it to organize middle lobe first, then lower lobe.
+  repair_hint: Re-anchor just distal to the RUL takeoff and identify where RML leaves before committing to the lower-lobe route.
+  quiz_prompt: What feature distinguishes BI from the right main bronchus?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - tracheobronchial_tree_review_2016
+- id: RML
+  aliases:
+  - RIGHT MIDDLE LOBE
+  - RIGHT MIDDLE LOBE BRONCHUS
+  - RML
+  definition: right middle lobe bronchus
+  kind: lobar_bronchus
+  side: right
+  parent: BI
+  children:
+  - RB4
+  - RB5
+  family: right_middle_lobe
+  recognition_cues:
+  - Short lobar branch off BI
+  - Splits into a lateral branch (RB4) and a medial branch (RB5)
+  pitfalls:
+  - Skipping the middle lobe and dropping directly into the lower lobe
+  - Swapping the lateral and medial branches before the pair is seen together
+  reanchor_point: BI
+  teaching_fact: The right middle lobe is a two-branch pair. In a clean view, think outer or lateral RB4 and inner or medial
+    RB5.
+  repair_hint: Re-anchor at BI, find the short middle-lobe branch, and confirm the two-branch pair before naming RB4 or RB5.
+  quiz_prompt: What pair confirms that you are in the right middle lobe?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+- id: RLL
+  aliases:
+  - RIGHT LOWER LOBE
+  - RIGHT LOWER LOBE BRONCHUS
+  - RLL
+  definition: right lower lobe bronchus
+  kind: lobar_bronchus
+  side: right
+  parent: BI
+  children:
+  - RB6
+  - RB7
+  - RB8
+  - RB9
+  - RB10
+  family: right_lower_lobe
+  recognition_cues:
+  - Lower-lobe route beyond BI
+  - RB6 appears as the superior branch before the basal fan
+  - Distal view opens into basal branches after RB6 is identified
+  pitfalls:
+  - Starting the basal sweep before confirming RB6
+  - Mixing the superior segment with the basal branches
+  reanchor_point: BI
+  teaching_fact: The right lower lobe is organized as RB6 first, then the basal sweep. That six-high then basal-fan pattern is
+    more reliable than memorizing one basal branch in isolation.
+  repair_hint: Re-anchor at BI, find the superior segment first, then rebuild the basal fan.
+  quiz_prompt: What branch should you confirm before starting the right basal sweep?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+- id: LMB
+  aliases:
+  - LEFT BRONCHUS
+  - LEFT MAIN
+  - LEFT MAIN BRONCHUS
+  - LEFT_MAIN_BRONCHUS
+  - LMB
+  definition: left main bronchus
+  kind: main_bronchus
+  side: left
+  parent: CARINA
+  children:
+  - LEFT_UPPER_TRUNK
+  - LLL
+  family: null
+  recognition_cues:
+  - Longer, narrower, more horizontal bronchus than the right main
+  - Passes under the aortic arch before dividing distally
+  - Upper and lower left routes organize from this longer corridor
+  pitfalls:
+  - Expecting the left side to branch as quickly as the right
+  - Losing orientation before the upper-versus-lower split is seen
+  reanchor_point: LMB
+  teaching_fact: The left main bronchus is the longer left corridor. Use that length and flatter angle to distinguish it from
+    the short, steeper right main.
+  repair_hint: Re-anchor at the carina, choose the longer flatter left corridor, and stay there until the upper and lower left
+    routes separate.
+  quiz_prompt: What two features help you recognize the left main bronchus from the carina?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - tracheobronchial_tree_review_2016
+- id: LEFT_UPPER_TRUNK
+  aliases:
+  - LEFT UPPER BRONCHUS
+  - LEFT UPPER LOBE TRUNK
+  - LEFT UPPER TRUNK
+  - LEFT_UPPER_TRUNK
+  definition: left upper lobe bronchial trunk
+  kind: lobar_bronchus
+  side: left
+  parent: LMB
+  children:
+  - LUL
+  - LINGULA
+  family: null
+  recognition_cues:
+  - Common left upper trunk before the split between upper division and lingula
+  - Stable checkpoint where superior-division and lingular paths separate
+  pitfalls:
+  - Calling the upper division or lingula too early before the trunk view is stable
+  - Confusing this trunk with the left main bronchus
+  reanchor_point: LMB
+  teaching_fact: The left upper trunk is the branching checkpoint for the upper division and lingula. Do not name either child
+    branch until you see the fork clearly.
+  repair_hint: Re-anchor in the left upper trunk and watch where the superior division and lingular branch separate.
+  quiz_prompt: What makes this the left upper trunk rather than the upper division or lingula?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - tracheobronchial_tree_review_2016
+- id: LUL
+  aliases:
+  - LEFT UPPER DIVISION
+  - LEFT UPPER LOBE
+  - LUL
+  - UPPER DIVISION
+  definition: left upper division bronchus
+  kind: division_bronchus
+  side: left
+  parent: LEFT_UPPER_TRUNK
+  children:
+  - LB1+2
+  - LB3
+  family: left_upper_division
+  recognition_cues:
+  - Superior division of the left upper lobe
+  - Splits into LB1+2 and LB3
+  - Teaching view often shows LB1+2 more back and up and LB3 more forward
+  pitfalls:
+  - Calling lingula the upper division
+  - Swapping LB1+2 with LB3 before the upper-division fork is stable
+  reanchor_point: LEFT_UPPER_TRUNK
+  teaching_fact: The left upper division is a two-branch pattern. LB1+2 tends to sit more back and up, while LB3 comes more
+    forward.
+  repair_hint: Re-anchor at the left upper trunk, then rebuild the upper-division fork before naming LB1+2 or LB3.
+  quiz_prompt: In the left upper division, which branch usually sits more back and up and which comes forward?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+- id: LINGULA
+  aliases:
+  - LINGULA
+  - LINGULAR BRONCHUS
+  definition: lingular bronchus
+  kind: division_bronchus
+  side: left
+  parent: LEFT_UPPER_TRUNK
+  children:
+  - LB4
+  - LB5
+  family: lingula
+  recognition_cues:
+  - Inferior division of the left upper lobe
+  - Splits into a superior lingular branch (LB4) and an inferior lingular branch (LB5)
+  pitfalls:
+  - Mixing lingula with the upper division
+  - Swapping the upper and lower lingular branches
+  reanchor_point: LEFT_UPPER_TRUNK
+  teaching_fact: The lingula is the left-sided counterpart of a middle-lobe pair. Think upper lingula first, then lower lingula.
+  repair_hint: Re-anchor at the left upper trunk and confirm the lingular pair before choosing LB4 or LB5.
+  quiz_prompt: What two branches make the lingular pair?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+- id: LLL
+  aliases:
+  - LEFT LOWER LOBE
+  - LEFT LOWER LOBE BRONCHUS
+  - LLL
+  definition: left lower lobe bronchus
+  kind: lobar_bronchus
+  side: left
+  parent: LMB
+  children:
+  - LB6
+  - LB8
+  - LB9
+  - LB10
+  family: left_lower_lobe
+  recognition_cues:
+  - LB6 appears as the superior branch before the basal branches
+  - Distal left lower lobe commonly organizes into anteromedial, lateral, and posterior basal branches
+  pitfalls:
+  - Going into the basal branches without checking LB6
+  - Forgetting that the left lower lobe often has a combined anteromedial basal pattern rather than a separate LB7
+  reanchor_point: LMB
+  teaching_fact: "The left lower lobe follows the same high-then-basal logic as the right: find LB6 first, then the basal
+    branches. In many patients the left anteromedial basal segments share a common origin, so this framework uses LB8, LB9, and
+    LB10 without a separate LB7."
+  repair_hint: Re-anchor at the left main or left lower lobe bronchus, find LB6 high, then rebuild the basal branches.
+  quiz_prompt: What branch should you see before committing to the left basal sweep?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+- id: RB1
+  aliases:
+  - RB1
+  definition: right upper lobe apical segment
+  kind: segment
+  side: right
+  parent: RUL
+  children: []
+  family: right_upper_lobe
+  recognition_cues:
+  - Usually the branch that rises most cranially from the RUL trifurcation
+  - Often looks like the most superior arm of the trifurcation rather than a forward-going tunnel
+  - Best identified only after RB2 and RB3 are also accounted for in the trifurcation
+  pitfalls:
+  - Calling a branch RB1 just because it is entered first
+  - Confusing the apical branch with RB2 when the scope is rotated
+  reanchor_point: RUL
+  teaching_fact: RB1 is the apical branch of the RUL trifurcation. Teach it as the branch that climbs upward from the trifurcation
+    hub, not as a fixed clockwise position.
+  repair_hint: Re-anchor at the full RUL trifurcation and identify the superior rising arm before naming RB1.
+  quiz_prompt: In the RUL trifurcation, which branch behaves like the superior or apical arm?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - tracheobronchial_tree_review_2016
+- id: RB2
+  aliases:
+  - RB2
+  definition: right upper lobe posterior segment
+  kind: segment
+  side: right
+  parent: RUL
+  children: []
+  family: right_upper_lobe
+  recognition_cues:
+  - Branch from the RUL trifurcation that tends to course backward and posteriorly
+  - Commonly looks deeper or more posterior than RB3 when the trifurcation is held steady
+  - Easier to trust after RB1 and RB3 have been located around the same hub
+  pitfalls:
+  - Using screen-left versus screen-right alone, which changes with scope rotation
+  - Confusing the posterior branch with RB1 when the trifurcation is only partially seen
+  reanchor_point: RUL
+  teaching_fact: RB2 is the posterior limb of the RUL trifurcation. A safer memory cue is back branch, not a fixed clock-face
+    label.
+  repair_hint: Rebuild the full trifurcation and identify the branch coursing most posteriorly before calling RB2.
+  quiz_prompt: What feature makes RB2 the posterior branch rather than the apical or anterior branch?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - tracheobronchial_tree_review_2016
+- id: RB3
+  aliases:
+  - RB3
+  definition: right upper lobe anterior segment
+  kind: segment
+  side: right
+  parent: RUL
+  children: []
+  family: right_upper_lobe
+  recognition_cues:
+  - Most ventral or forward-directed branch of the RUL trifurcation
+  - Often looks like the branch that comes toward the front of the image rather than up or back
+  - Usually identified after the apical and posterior arms are stabilized
+  pitfalls:
+  - Naming the most convenient branch RB3 without seeing all three segmental openings
+  - Confusing the anterior branch with RB2 when the scope tip is flexed
+  reanchor_point: RUL
+  teaching_fact: RB3 is the anterior limb of the RUL trifurcation. Students usually learn it fastest as the forward branch once
+    the up branch and back branch are already assigned.
+  repair_hint: Re-anchor at the RUL trifurcation and reserve RB3 for the remaining forward-going arm.
+  quiz_prompt: In the RUL trifurcation, which branch is the forward or anterior arm?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - tracheobronchial_tree_review_2016
+- id: RB4
+  aliases:
+  - RB4
+  definition: right middle lobe lateral segment
+  kind: segment
+  side: right
+  parent: RML
+  children: []
+  family: right_middle_lobe
+  recognition_cues:
+  - Outer branch of the short RML pair once the middle-lobe opening is entered
+  - Tends to point laterally toward the chest wall rather than medially toward the heart
+  - Best recognized when RB4 and RB5 are seen as a matched pair
+  pitfalls:
+  - Dropping into the RLL and missing the middle-lobe pair completely
+  - Swapping RB4 and RB5 before both branches are inspected together
+  reanchor_point: RML
+  teaching_fact: RB4 is the lateral member of the right middle-lobe pair. A practical student cue is outside branch of the RML
+    pair.
+  repair_hint: Re-anchor at the short RML branch and identify the outer member of the two-branch pair.
+  quiz_prompt: In the right middle lobe, which branch is the outer or lateral member of the pair?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+- id: RB5
+  aliases:
+  - RB5
+  definition: right middle lobe medial segment
+  kind: segment
+  side: right
+  parent: RML
+  children: []
+  family: right_middle_lobe
+  recognition_cues:
+  - Inner branch of the short RML pair
+  - Tends to face medially toward the mediastinal or cardiac side rather than the outer chest wall
+  - Most reliable when compared directly against RB4 in the same view
+  pitfalls:
+  - Confusing RB5 with RB4 because the pair is viewed obliquely
+  - Naming RB5 without confirming you are in the RML branch and not the lower lobe
+  reanchor_point: RML
+  teaching_fact: RB5 is the medial member of the right middle-lobe pair. Teach it as the inner branch that sits beside RB4.
+  repair_hint: Re-anchor at the RML bifurcation and identify the inner or mediastinal-facing branch before calling RB5.
+  quiz_prompt: In the right middle-lobe pair, what makes RB5 the medial branch?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+- id: RB6
+  aliases:
+  - RB6
+  definition: right lower lobe superior segment
+  kind: segment
+  side: right
+  parent: RLL
+  children: []
+  family: right_lower_lobe
+  recognition_cues:
+  - Early superior takeoff from the RLL before the basal branches open up
+  - Often appears like a roof branch or high side branch above the basal fan
+  - Most important checkpoint before any basal naming begins
+  pitfalls:
+  - Entering the basal fan first and forgetting to inspect RB6
+  - Mistaking a basal branch for RB6 because it is encountered distally
+  reanchor_point: RLL
+  teaching_fact: RB6 is the superior segment of the right lower lobe and should be thought of as the roof branch before the
+    basal fan.
+  repair_hint: Pull back to the RLL origin and locate the high superior takeoff before labeling any basal branch.
+  quiz_prompt: What makes RB6 different from the branches of the right basal fan?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+- id: RB7
+  aliases:
+  - RB7
+  definition: right lower lobe medial basal segment
+  kind: segment
+  side: right
+  parent: RLL
+  children: []
+  family: right_lower_lobe
+  recognition_cues:
+  - Medial or inner basal branch on the right lower-lobe side after RB6 is excluded
+  - Often the branch closest to the mediastinal side within the basal group
+  - In some patients it may be short or share a common stem, so identify it within the basal framework rather than in isolation
+  pitfalls:
+  - Expecting RB7 to be large and separate in every patient
+  - Starting the basal sequence before confirming that RB6 has already been seen
+  reanchor_point: RLL
+  teaching_fact: RB7 is the medial basal branch of the RLL. A realistic teaching cue is inner basal branch, with the warning
+    that this segment can be variable.
+  repair_hint: Re-anchor after RB6, then identify the basal branch closest to the inner mediastinal side.
+  quiz_prompt: In the right basal fan, which branch is the medial or inner branch, and what makes it tricky?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+- id: RB8
+  aliases:
+  - RB8
+  definition: right lower lobe anterior basal segment
+  kind: segment
+  side: right
+  parent: RLL
+  children: []
+  family: right_lower_lobe
+  recognition_cues:
+  - Forward-facing branch of the right basal group after RB6
+  - Usually sits more ventrally than RB9 and RB10
+  - Easier to trust once the inner, outer, and back directions of the basal fan are compared together
+  pitfalls:
+  - Confusing anterior with lateral when only one basal opening is visible
+  - Naming RB8 before rebuilding the whole basal fan orientation
+  reanchor_point: RLL
+  teaching_fact: RB8 is the front branch of the right basal fan. It is best taught as forward basal rather than by a rigid screen
+    position.
+  repair_hint: Re-anchor in the RLL basal fan and identify the branch that comes most anteriorly.
+  quiz_prompt: In the right basal fan, which branch is the forward or anterior opening?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+- id: RB9
+  aliases:
+  - RB9
+  definition: right lower lobe lateral basal segment
+  kind: segment
+  side: right
+  parent: RLL
+  children: []
+  family: right_lower_lobe
+  recognition_cues:
+  - Outer branch of the right basal fan toward the lateral chest wall
+  - Usually sits between the more anterior RB8 and the more posterior RB10 in the basal pattern
+  - Often easiest to identify by excluding the forward and back branches first
+  pitfalls:
+  - Calling the first side-facing basal branch RB9 without comparing it to RB8 and RB10
+  - Losing orientation when the scope is rotated and relying only on screen position
+  reanchor_point: RLL
+  teaching_fact: RB9 is the lateral member of the right basal group. The most useful memory cue is outside basal branch.
+  repair_hint: Rebuild the right basal fan and identify the branch pointing most laterally toward the chest wall.
+  quiz_prompt: What makes RB9 the lateral branch rather than the anterior or posterior basal branch?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+- id: RB10
+  aliases:
+  - RB10
+  definition: right lower lobe posterior basal segment
+  kind: segment
+  side: right
+  parent: RLL
+  children: []
+  family: right_lower_lobe
+  recognition_cues:
+  - Back-most branch of the right basal fan
+  - Often appears to course posteriorly and deeper away from the operator
+  - Usually the final branch to assign after the anterior and lateral basal branches are identified
+  pitfalls:
+  - Calling a deep branch RB10 without reconstructing the rest of the basal fan
+  - Confusing posterior depth with simple distance from the scope tip
+  reanchor_point: RLL
+  teaching_fact: RB10 is the back branch of the right basal fan. For trainees, back-most basal branch is a better cue than any
+    rigid clock position.
+  repair_hint: Re-anchor in the basal fan and reserve RB10 for the branch that clearly tracks posteriorly.
+  quiz_prompt: In the right basal fan, which branch is the back or posterior opening?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+- id: LB1+2
+  aliases:
+  - LB1+2
+  - LB1/2
+  definition: left upper division apicoposterior segment
+  kind: segment
+  side: left
+  parent: LUL
+  children: []
+  family: left_upper_division
+  recognition_cues:
+  - Combined apical and posterior branch of the left upper division
+  - Often looks like the branch that goes up and back, paired against a more forward LB3
+  - More trustworthy when identified as one half of the upper-division fork rather than as an isolated lumen
+  pitfalls:
+  - Expecting separate left apical and posterior openings in every case
+  - Confusing LB1+2 with LB3 when the superior division is not centered
+  reanchor_point: LUL
+  teaching_fact: LB1+2 is the classic combined apicoposterior branch of the left upper division. Students usually learn it best
+    as the back-and-up partner to the more forward LB3.
+  repair_hint: Re-anchor at the left upper-division fork and identify the branch that heads up and back.
+  quiz_prompt: In the left upper division, which branch is the combined back-and-up limb?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - tracheobronchial_tree_review_2016
+- id: LB3
+  aliases:
+  - LB3
+  definition: left upper division anterior segment
+  kind: segment
+  side: left
+  parent: LUL
+  children: []
+  family: left_upper_division
+  recognition_cues:
+  - Forward branch of the left upper-division bifurcation
+  - Usually opposes the more back-and-up LB1+2 branch
+  - Often appears more ventral or anterior than the companion branch
+  pitfalls:
+  - Labeling LB3 before the paired upper-division view is clear
+  - Confusing a rotated image with a true anterior course
+  reanchor_point: LUL
+  teaching_fact: LB3 is the anterior branch of the left upper division. A reliable memory cue is front branch opposite LB1+2.
+  repair_hint: Re-anchor at the upper-division fork and identify the branch that runs most forward.
+  quiz_prompt: In the left upper division, which opening is the forward or anterior branch?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - tracheobronchial_tree_review_2016
+- id: LB4
+  aliases:
+  - LB4
+  definition: lingular superior segment
+  kind: segment
+  side: left
+  parent: LINGULA
+  children: []
+  family: lingula
+  recognition_cues:
+  - Upper member of the lingular pair
+  - Usually sits above LB5 and often feels like the first branch of the lingular fork
+  - Best recognized as the superior half of the lingular counterpart to the right middle lobe
+  pitfalls:
+  - Mixing the lingular pair with the left upper-division branches
+  - Calling the deeper or lower branch LB4 because it is entered first
+  reanchor_point: LINGULA
+  teaching_fact: LB4 is the superior lingular branch. For most learners, upper lingula is the simplest and safest cue.
+  repair_hint: Re-anchor at the lingular bifurcation and choose the upper member of the pair.
+  quiz_prompt: In the lingular pair, which opening is the superior branch?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+- id: LB5
+  aliases:
+  - LB5
+  definition: lingular inferior segment
+  kind: segment
+  side: left
+  parent: LINGULA
+  children: []
+  family: lingula
+  recognition_cues:
+  - Lower member of the lingular pair
+  - Usually sits below or more inferior than LB4
+  - Most reliable when identified in direct comparison with the upper lingular branch
+  pitfalls:
+  - Confusing LB5 with LB4 because of scope rotation
+  - Naming an isolated branch LB5 without confirming the lingular pair
+  reanchor_point: LINGULA
+  teaching_fact: LB5 is the inferior lingular branch. Teach it as the lower partner of LB4, similar to a left-sided middle-lobe
+    pair.
+  repair_hint: Re-anchor at the lingular fork and reserve LB5 for the lower branch.
+  quiz_prompt: In the lingular pair, which opening is the lower or inferior branch?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+- id: LB6
+  aliases:
+  - LB6
+  definition: left lower lobe superior segment
+  kind: segment
+  side: left
+  parent: LLL
+  children: []
+  family: left_lower_lobe
+  recognition_cues:
+  - High superior takeoff from the LLL before the basal group
+  - Usually looks like the roof branch above the left basal fan
+  - The key checkpoint before any left basal naming
+  pitfalls:
+  - Entering the basal branches and forgetting LB6
+  - Confusing a proximal basal branch with the superior segment
+  reanchor_point: LLL
+  teaching_fact: LB6 is the superior segment of the left lower lobe and should be treated as the high branch before the left basal
+    sweep.
+  repair_hint: Pull back to the LLL origin and find the high superior takeoff before labeling the basal branches.
+  quiz_prompt: What landmark branch should you confirm before starting the left basal sweep?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+- id: LB8
+  aliases:
+  - LB8
+  definition: left lower lobe anterior basal segment
+  kind: segment
+  side: left
+  parent: LLL
+  children: []
+  family: left_lower_lobe
+  recognition_cues:
+  - Forward member of the left basal group after LB6
+  - In this framework it carries the anteromedial route because no separate LB7 is listed
+  - Usually sits more ventrally than LB9 and LB10
+  pitfalls:
+  - Forgetting that many left lungs have a combined anteromedial basal pattern
+  - Treating LB8 as if it must be identical to the right-sided RB8
+  reanchor_point: LLL
+  teaching_fact: LB8 is used here for the forward left basal route, often representing the combined anteromedial basal pattern
+    seen on the left.
+  repair_hint: Re-anchor after LB6 and identify the forward branch of the left basal group.
+  quiz_prompt: On the left lower lobe, which basal branch is used as the forward or anteromedial route in this framework?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+- id: LB9
+  aliases:
+  - LB9
+  definition: left lower lobe lateral basal segment
+  kind: segment
+  side: left
+  parent: LLL
+  children: []
+  family: left_lower_lobe
+  recognition_cues:
+  - Outer branch of the left basal group toward the chest wall
+  - Usually sits between the forward LB8 route and the back LB10 route
+  - Often easier to assign after the anterior and posterior branches are already recognized
+  pitfalls:
+  - Calling any side-looking basal opening LB9 without restoring the full basal fan
+  - Over-translating right-sided orientation directly to the left side
+  reanchor_point: LLL
+  teaching_fact: LB9 is the lateral branch of the left basal group. A helpful cue is outside basal branch on the left.
+  repair_hint: Rebuild the left basal fan and identify the branch pointing laterally toward the chest wall.
+  quiz_prompt: Which left basal branch points most laterally toward the chest wall?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+- id: LB10
+  aliases:
+  - LB10
+  definition: left lower lobe posterior basal segment
+  kind: segment
+  side: left
+  parent: LLL
+  children: []
+  family: left_lower_lobe
+  recognition_cues:
+  - Posterior or back-most branch of the left basal group
+  - Often looks like the deepest backward course in the basal fan
+  - Usually assigned after LB8 and LB9 have been distinguished
+  pitfalls:
+  - Confusing a deep-looking lumen with a truly posterior course
+  - Naming LB10 before the left basal framework has been rebuilt
+  reanchor_point: LLL
+  teaching_fact: LB10 is the back branch of the left basal group. For learners, posterior basal is more useful than memorizing a
+    screen position.
+  repair_hint: Re-anchor in the left basal fan and reserve LB10 for the branch that clearly runs posteriorly.
+  quiz_prompt: In the left basal fan, which branch is the back or posterior opening?
+  references:
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+landmarks:
+- id: L1_CARINA
+  aliases:
+  - CARINA
+  - L1_CARINA
+  - carina
+  definition: carina
+  recognition_cues:
+  - Sharp central spur with both main bronchi visible at once
+  - Shorter steeper right main and longer flatter left main visible from the same reset view
+  - Cartilaginous knife-edge appearance rather than a rounded distal segmental divider
+  - Landmark view is obtained from the distal trachea in the neutral 0 degree scope position
+  pitfalls:
+  - right upper lobe trifurcation or another distal bifurcation mistaken for the main split
+  - ignoring a widened or blunted carina that can signal central pathology
+  parent: null
+  children: []
+  reanchor_point: CARINA
+  teaching_fact: In the four-landmarks method, landmark 1 is the distal tracheal view of the carina at 0 degrees. Use it as the
+    neutral reset position, with the sharp spur and both main bronchi visible together.
+  repair_hint: Return to the distal trachea, neutralize the scope to 0 degrees, and re-center until the sharp spur and both main
+    bronchi reappear.
+  quiz_prompt: In the four-landmarks method, what scope position and visual features define landmark 1?
+  references:
+  - jove_four_landmarks_2023
+  - bronchoscopy_anatomy_review_2017
+  - tracheobronchial_tree_review_2016
+  display_name: carina
+  when_to_teach: first_arrival_only
+  memory_hook_type: position_hook
+  memory_hook_core: zero degrees at the sharp split
+  memory_hook_rhythm: Zero at the split, then reset.
+  action_anchor: return here when disoriented or drifted
+  default_teaching_line: Landmark 1 is the carina seen from the distal trachea at 0 degrees.
+  reinforcement_line: Zero at the split means reset.
+  repair_line: Go back to 0 degrees in the distal trachea until the sharp spur and both main bronchi are visible again.
+  quiz_line: In the four-landmarks method, what defines landmark 1?
+  local_navigation_cues:
+    RMB: 'From the carina, RMB should open on the right. Memory cue: short right path.'
+    LMB: 'From the carina, LMB should open on the left. Memory cue: longer left path.'
+  notes: Use when the trainee first reaches the main bifurcation. This card is mainly about orientation and recovery, not
+    anatomy detail.
+- id: L2_RUL
+  aliases:
+  - L2_RUL
+  - RUL
+  - right upper lobe
+  - right_upper_lobe
+  definition: right upper lobe landmark
+  recognition_cues:
+  - Stable three-way trifurcation, often described as a cloverleaf or Mercedes-sign view
+  - One branch rises apically, one tracks posteriorly, and one comes forward
+  - Local family view that should be inspected in place rather than treated like a transit airway
+  - Landmark view is accessed by turning 90 degrees to the right and flexing the tip upward
+  pitfalls:
+  - carina
+  - bronchus intermedius entry
+  parent: null
+  children: []
+  reanchor_point: RUL
+  teaching_fact: 'In the four-landmarks method, landmark 2 is reached by turning 90 degrees to the right and flexing upward to
+    expose the Mercedes-sign trifurcation. After the landmark is found, defer from that angle to inspect RB1, RB2, and RB3.'
+  repair_hint: 'Return to the right upper lobe using the 90-degree-right plus tip-up approach, then rebuild the Mercedes-sign
+    trifurcation before inspecting the three segments.'
+  quiz_prompt: 'What scope movement and landmark shape define the right-upper-lobe landmark in the four-landmarks method?'
+  references:
+  - jove_four_landmarks_2023
+  - bronchoscopy_anatomy_review_2017
+  - tracheobronchial_tree_review_2016
+  display_name: right upper lobe landmark
+  when_to_teach: first_arrival_only
+  memory_hook_type: shape_hook
+  memory_hook_core: right 90 and tip up to the Mercedes view
+  memory_hook_rhythm: ''
+  action_anchor: return to the right-upper-lobe trifurcation using the right-90-and-up entry, then inspect the three branches
+  default_teaching_line: 'Landmark 2: right 90 and tip up to the Mercedes view.'
+  reinforcement_line: 'Mercedes view: RB1 apical, RB2 posterior, RB3 anterior.'
+  repair_line: Return to the right upper-lobe opening, use the rightward rotation with upward tip flexion to rebuild the trifurcation, then inspect the three branches locally.
+  quiz_line: Which three branches form the right upper-lobe trifurcation, and what maneuver helps expose that view?
+  local_navigation_cues:
+    RB1: RB1 is the apical branch that climbs upward from the trifurcation.
+    RB2: RB2 is the posterior branch that tracks back from the trifurcation.
+    RB3: RB3 is the forward branch of the trifurcation.
+  notes: The JoVE method makes the entry angle part of the memory cue. Keep the trifurcation shape teaching, but anchor the
+    landmark to right 90 degrees plus upward tip flexion.
+- id: L3_RIGHT_MIDDLE_LOWER
+  aliases:
+  - L3_RIGHT_MIDDLE_LOWER
+  - RIGHT_MIDDLE_LOWER
+  - RML_RLL
+  - right middle lower
+  - right_middle_lower
+  definition: right middle-lower landmark
+  recognition_cues:
+  - BI checkpoint where a short middle-lobe branch and the longer lower-lobe route separate
+  - RML appears as a side pocket with a two-branch pair, while RB6 sits high before the basal fan
+  - Useful organizing view for deciding middle pair first, then lower-lobe survey
+  - In the four-landmarks method, RML is entered from about 45 degrees right, RB6 lies opposite with the tip extended, and the
+    basal sweep is then inspected from a neutral 0 degree orientation
+  pitfalls:
+  - right upper lobe entry
+  - lower-lobe-only view before middle is checked
+  parent: null
+  children: []
+  reanchor_point: BI
+  teaching_fact: 'In the four-landmarks method, landmark 3 starts at BI with about 45 degrees to the right to inspect RB4 and
+    RB5. Return to that view, extend the tip to inspect RB6 opposite the middle lobe, then neutralize to 0 degrees for RB7 to
+    RB10.'
+  repair_hint: "Pause at BI and rebuild the paper sequence: 45 degrees right for RB4 and RB5, extended tip opposite for RB6, then
+    0 degrees for the basal sweep."
+  quiz_prompt: What angle sequence defines landmark 3 in the four-landmarks method?
+  references:
+  - jove_four_landmarks_2023
+  - bronchoscopy_anatomy_review_2017
+  - pulmonary_segment_overview_2018
+  display_name: right middle-lower landmark
+  when_to_teach: first_arrival_only
+  memory_hook_type: action_hook
+  memory_hook_core: right 45, six opposite, then zero basal
+  memory_hook_rhythm: Right 45, six opposite, zero for basal.
+  action_anchor: pause here to separate the middle-lobe path from the lower-lobe path, then check RB6 before the basal segments
+  default_teaching_line: 'Landmark 3 is right 45 for the middle-lobe pair, RB6 opposite with extension, then 0 degrees for the
+    basal sweep.'
+  reinforcement_line: Right 45, six opposite, zero for basal.
+  repair_line: "Pause at BI and rebuild the sequence: right 45, RB6 opposite, then zero for the basal sweep."
+  quiz_line: What angle sequence defines landmark 3?
+  local_navigation_cues:
+    RB4: RB4 is the more lateral branch of the middle-lobe pair when viewed obliquely from the BI landmark.
+    RB5: RB5 is the medial partner of RB4 in the oblique middle-lobe view.
+    RB6: RB6 sits high before the basal sweep.
+    RB7: RB7 is the inner medial basal branch, but it can be smaller or variable.
+    RB8: RB8 is the front basal branch once the scope returns to 0 degrees.
+    RB9: RB9 is the lateral basal branch in the oblique numbering scheme.
+    RB10: RB10 is the posterior basal branch at the bottom of the sweep.
+  notes: This is a procedural teaching card. Prioritize the structured training sequence and explicitly warn against skipping
+    RB6 while moving into the basal lower-lobe tree.
+- id: L4_LEFT_MAIN
+  aliases:
+  - L4_LEFT_MAIN
+  - LEFT_MAIN
+  - LEFT_SIDE
+  - left landmark
+  - left_main
+  definition: left lung landmark
+  recognition_cues:
+  - Long left main corridor before the upper-trunk versus lower-lobe decision
+  - Left upper trunk and left lower lobe separate from a longer flatter main bronchus than on the right
+  - Useful left reset view before choosing upper-side or lower-side exploration
+  - In the four-landmarks method, the left upper side is entered at 90 degrees left, LB6 is reached from about 45 degrees left
+    with extension, and the left basal sweep is inspected from 0 degrees
+  pitfalls:
+  - left upper-only entry
+  - lower-lobe continuation without left-side reset
+  parent: null
+  children: []
+  reanchor_point: LMB
+  teaching_fact: 'In the four-landmarks method, landmark 4 begins from the left main bronchus: 90 degrees left for the upper lobe
+    and lingula, then back to the left main and 45 degrees left with extension for LB6, then 0 degrees for LB8 to LB10.'
+  repair_hint: 'Return to the left main bronchus and rebuild the paper sequence: 90 degrees left for upper lobe and lingula,
+    45 degrees left with extension for LB6, then 0 degrees for the left basal sweep.'
+  quiz_prompt: What angle sequence defines landmark 4 in the four-landmarks method?
+  references:
+  - jove_four_landmarks_2023
+  - bronchoscopy_anatomy_review_2017
+  - tracheobronchial_tree_review_2016
+  display_name: left lung landmark
+  when_to_teach: first_arrival_only
+  memory_hook_type: action_hook
+  memory_hook_core: left 90, left 45 for six, then zero basal
+  memory_hook_rhythm: Left 90, left 45 for six, zero for basal.
+  action_anchor: use the left main view to organize the upper side first, then the lower-lobe path with LB6 before the basal
+    segments
+  default_teaching_line: 'Landmark 4 is left 90 for upper lobe and lingula, left 45 with extension for LB6, then 0 degrees for
+    the basal sweep.'
+  reinforcement_line: Left 90, left 45 for six, zero for basal.
+  repair_line: 'Return to the left main and rebuild the sequence: left 90, left 45 with extension, then zero for basal.'
+  quiz_line: What angle sequence defines landmark 4?
+  local_navigation_cues:
+    LB1+2: 'In the left upper division, LB1+2 sits more back and up. Memory cue: back-up branch.'
+    LB3: 'In the left upper division, LB3 comes forward. Memory cue: front branch.'
+    LB4: 'In the lingula, LB4 is the upper opening. Memory cue: upper lingula first.'
+    LB5: 'In the lingula, LB5 is the lower opening. Memory cue: lower lingula next.'
+    LB6: 'Before the basal run, LB6 is the higher opening. Memory cue: six sits high.'
+    LB8: After LB6, return to 0 degrees and use LB8 as the forward anteromedial left basal route in this framework.
+    LB9: LB9 is the outer left basal branch.
+    LB10: LB10 is the back left basal branch.
+  notes: The JoVE paper explicitly states there is no left segment 7 and that the left side follows the same lateral oblique
+    numbering idea for 4 and 5 plus 8 to 10 as the right side.
+qa_aliases:
+- id: qa_where_next
+  aliases:
+  - where do i go
+  - where next
+  - which way
+  - what next
+  definition: Request for next navigation step
+  recognition_cues: []
+  pitfalls: []
+  parent: null
+  children: []
+  reanchor_point: CARINA
+  teaching_fact: Answer with the next grounded navigation step only.
+  repair_hint: Re-anchor first if route is unclear.
+  quiz_prompt: What is the next grounded step?
+  references:
+  - qa_skill_patterns
+- id: qa_where_am_i
+  aliases:
+  - where am i
+  - what is this
+  - which branch is this
+  - is this rb1 or rb2
+  definition: Request for airway identification
+  recognition_cues: []
+  pitfalls: []
+  parent: null
+  children: []
+  reanchor_point: CARINA
+  teaching_fact: Name the branch only after confirming its local landmark view.
+  repair_hint: Use recognition cues before committing to a branch name.
+  quiz_prompt: What view confirms this branch?
+  references:
+  - qa_skill_patterns
+safety_rules:
+- id: safety_wall_contact
+  aliases:
+  - wall contact
+  - pink blur
+  - mucosal contact
+  definition: Do not advance into a wall-dominant view.
+  recognition_cues:
+  - Pink blur
+  - Lumen not centered
+  pitfalls:
+  - Continuing to push forward without recentering
+  parent: null
+  children: []
+  reanchor_point: last_stable_view
+  teaching_fact: 'Safety first: center the lumen before advancing.'
+  repair_hint: Stop, pull back slightly, recenter, then continue.
+  quiz_prompt: What should you do before pushing forward again?

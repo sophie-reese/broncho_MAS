@@ -54,6 +54,9 @@ class RealtimeContext:
     raw_current: str = ""
     raw_previous: str = ""
     raw_student_q: str = ""
+    raw_directional_hint: Any = None
+    control_hint_text: str = ""
+    control_hint_steps: List[str] | None = None
 
 
 class RealtimeInstructorEngine:
@@ -61,7 +64,9 @@ class RealtimeInstructorEngine:
 
     def __init__(self, curriculum_engine: CurriculumEngine):
         self.curriculum_engine = curriculum_engine
-        visit_order = getattr(curriculum_engine, "visit_order", None) or getattr(curriculum_engine, "airway_order", None) or getattr(curriculum_engine, "AIRWAY_VISIT_ORDER", [])
+        visit_order = getattr(curriculum_engine, "visit_order", None) or getattr(
+            curriculum_engine, "airway_order", None
+        ) or getattr(curriculum_engine, "AIRWAY_VISIT_ORDER", [])
         self._allowed_airways = set(visit_order or [])
 
     # ---------------- main path ----------------
@@ -80,6 +85,13 @@ class RealtimeInstructorEngine:
         target_visible_raw = state.get("is_target_visible", None)
         target_not_visible = False if target_visible_raw is None else (not bool(target_visible_raw))
 
+        raw_directional_hint = state.get("directional_hint") or state.get("auth_directional_hint")
+        control_hint_text = self._extract_control_hint_text(
+            raw_directional_hint=raw_directional_hint,
+            state=state,
+        )
+        control_hint_steps = self._build_control_hint_steps(control_hint_text)
+
         return RealtimeContext(
             current_airway=current_airway,
             requested_next_airway=requested_next_airway,
@@ -93,6 +105,9 @@ class RealtimeInstructorEngine:
             raw_current=str(state.get("current_situation") or "").strip(),
             raw_previous=str(state.get("previous_msgs") or "").strip(),
             raw_student_q=str(state.get("student_question") or "").strip(),
+            raw_directional_hint=raw_directional_hint,
+            control_hint_text=control_hint_text,
+            control_hint_steps=control_hint_steps,
         )
 
     # ---------------- legacy fallback ----------------
@@ -102,6 +117,7 @@ class RealtimeInstructorEngine:
         student_q = student_q or ""
 
         nav_target = self._extract_from_patterns(_NAV_TARGET_PATTERNS, current)
+        control_hint_text = self._extract_control_hint_text(raw_directional_hint=None, state={})
         ctx = RealtimeContext(
             current_airway=self._extract_from_patterns(_CURRENT_PATTERNS, current),
             requested_next_airway=self._extract_from_patterns(_REQUESTED_NEXT_PATTERNS, current),
@@ -115,6 +131,9 @@ class RealtimeInstructorEngine:
             raw_current=current.strip(),
             raw_previous=previous_msgs.strip(),
             raw_student_q=student_q.strip(),
+            raw_directional_hint=None,
+            control_hint_text=control_hint_text,
+            control_hint_steps=self._build_control_hint_steps(control_hint_text),
         )
         if not ctx.reached_regions:
             ctx.reached_regions = []
@@ -144,6 +163,9 @@ class RealtimeInstructorEngine:
             "neutral_definition": neutral,
         }
 
+        cue = self._normalize_cue(getattr(landmark, "recognition_cue", "") or "the next lumen")
+        control_steps = list(ctx.control_hint_steps or [])
+
         if ctx.needs_backtrack:
             mode = "backtrack"
             anchor = "L1_CARINA"
@@ -157,26 +179,24 @@ class RealtimeInstructorEngine:
         elif ctx.target_not_visible:
             mode = "locate"
             anchor = getattr(landmark, "landmark_id", "") or (current_airway if current_airway else "L1_CARINA")
-            cue = self._normalize_cue(getattr(landmark, "recognition_cue", "") or "the next opening")
-            first_angle = "0°"
-            angles = getattr(landmark, "recommended_angles", []) or []
-            if angles and isinstance(angles[0], dict):
-                first_angle = str(angles[0].get("angle", "0°"))
-            side = "counter-clockwise" if (target_airway.startswith("LB") or target_airway == "LMB") else "clockwise"
-            micro_steps = [
-                "Hold neutral at the anchor.",
-                f"Rotate {side} toward {first_angle}.",
-                f"Look for {cue}.",
-            ]
+            micro_steps = []
+            if control_steps:
+                micro_steps.extend(control_steps[:2])
+            else:
+                micro_steps.append("Hold neutral at the anchor.")
+            if cue:
+                micro_steps.append(f"Look for {cue}.")
         else:
             mode = "advance"
             anchor = getattr(landmark, "landmark_id", "") or "L1_CARINA"
-            cue = self._normalize_cue(getattr(landmark, "recognition_cue", "") or "the next lumen")
-            micro_steps = [
-                "Keep the lumen centered.",
-                f"Follow the landmark cue: {cue}.",
-                f"Advance toward {target_airway} in small increments.",
-            ]
+            micro_steps = []
+            if control_steps:
+                micro_steps.extend(control_steps[:2])
+            else:
+                micro_steps.append("Keep the lumen centered.")
+            if cue:
+                micro_steps.append(f"Follow the landmark cue: {cue}.")
+            micro_steps.append(f"Advance toward {target_airway} in small increments.")
 
         return {
             "mode": mode,
@@ -186,7 +206,8 @@ class RealtimeInstructorEngine:
             "recognition_cue": cue,
             "recommended_angle": recommended,
             "micro_steps": micro_steps,
-            "why": "Realtime deterministic plan inside MAS runtime.",
+            "control_hint_text": ctx.control_hint_text,
+            "why": "Realtime deterministic plan inside MAS runtime. Use explicit upstream control hints when available; do not infer left/right rotation from airway side.",
         }
 
     def build_guidance(self, ctx: RealtimeContext, plan: Dict[str, Any]) -> Dict[str, Any]:
@@ -194,31 +215,45 @@ class RealtimeInstructorEngine:
         mode = str(plan.get("mode", "reorient")).lower()
         cue = self._normalize_cue(str(plan.get("recognition_cue", "")).strip())
         current = str(ctx.current_airway or "").upper()
+        control_steps = list(ctx.control_hint_steps or [])
 
         if mode == "backtrack":
             lines = ["Back out slowly.", "Center the carina."]
             if ctx.wall_contact_risk:
                 lines = ["Ease back off the wall.", "Re-center on the carina."]
         elif mode == "locate":
-            if current == "CARINA" and target.startswith("LB"):
-                lines = ["Hold at the carina.", "Rotate counter-clockwise to find LMB."]
-            elif current == "CARINA" and target.startswith("RB"):
-                lines = ["Hold at the carina.", "Rotate clockwise toward the right upper-lobe entry."]
+            lines = []
+            if current == "CARINA":
+                lines.append("Hold at the carina.")
+            elif current:
+                lines.append(f"Hold steady at {current}.")
             else:
-                lines = ["Hold center.", f"Look for {self._short_cue(cue)}."]
+                lines.append("Hold center.")
+            if control_steps:
+                lines.extend(control_steps[:1])
+            if target in {"LMB", "RMB"}:
+                lines.append(f"Look for the {target} opening.")
+            elif cue:
+                lines.append(f"Look for {self._short_cue(cue)}.")
+            else:
+                lines.append(f"Look for {target or 'the next opening'}.")
         else:
             if current and target and current == target:
                 lines = ["Good. Keep the lumen centered.", f"Inspect {target} carefully."]
-            elif current == "LMB" and target.startswith("LB"):
-                lines = ["Good. Keep the lumen centered.", f"Advance toward {target} in small steps."]
-            elif current == "CARINA" and target.startswith("LB"):
-                lines = ["Hold at the carina.", "Rotate counter-clockwise and find LMB."]
-            elif current == "CARINA" and target.startswith("RB"):
-                lines = ["Hold at the carina.", "Rotate clockwise toward the right upper-lobe entry."]
             else:
-                lines = ["Keep the lumen centered.", f"Advance toward {target or 'the next opening'}."]
-                if cue:
+                lines = []
+                if current == "CARINA":
+                    lines.append("Hold at the carina.")
+                else:
+                    lines.append("Keep the lumen centered.")
+                if control_steps:
+                    lines.extend(control_steps[:1])
+                elif current and target and current != target:
+                    lines.append(f"Advance toward {target} in small steps.")
+                if cue and (not control_steps or "look for" not in " ".join(s.lower() for s in control_steps)):
                     lines.append(f"Look for {self._short_cue(cue)}.")
+                elif not cue and target and current != target:
+                    lines.append(f"Move toward {target}.")
 
         if ctx.needs_encouragement and lines:
             lines[0] = self._prefix_encouragement(lines[0])
@@ -360,7 +395,6 @@ class RealtimeInstructorEngine:
         cue = re.sub(r"\s+", " ", cue).strip(" ,;:")
         return cue or "the next lumen"
 
-
     @classmethod
     def _short_cue(cls, cue: str) -> str:
         cue = cls._normalize_cue(cue)
@@ -410,3 +444,99 @@ class RealtimeInstructorEngine:
         if not current_utt or not previous_msgs:
             return False
         return current_utt in previous_msgs[-300:]
+
+    @classmethod
+    def _build_control_hint_steps(cls, control_hint_text: str) -> List[str]:
+        text = str(control_hint_text or "").strip()
+        if not text:
+            return []
+        pieces = re.split(r"[.;]\s+|\n+", text)
+        cleaned: List[str] = []
+        for piece in pieces:
+            piece = cls._normalize_control_phrase(piece)
+            if piece and piece not in cleaned:
+                cleaned.append(piece)
+        return cleaned
+
+    @classmethod
+    def _extract_control_hint_text(cls, raw_directional_hint: Any, state: Dict[str, Any]) -> str:
+        if isinstance(raw_directional_hint, dict):
+            candidates = [
+                raw_directional_hint.get("coach_text"),
+                raw_directional_hint.get("text"),
+                raw_directional_hint.get("primary_text"),
+                raw_directional_hint.get("action"),
+            ]
+            for value in candidates:
+                if isinstance(value, str) and value.strip():
+                    return cls._normalize_control_phrase(value)
+        elif isinstance(raw_directional_hint, str) and raw_directional_hint.strip():
+            return cls._normalize_control_phrase(raw_directional_hint)
+
+        for key in ("coach_text", "directional_text", "control_hint_text"):
+            value = state.get(key)
+            if isinstance(value, str) and value.strip():
+                return cls._normalize_control_phrase(value)
+
+        m_joints = state.get("m_jointsVelRel")
+        if isinstance(m_joints, (list, tuple)) and len(m_joints) >= 3:
+            return cls._control_text_from_m_joints(m_joints)
+
+        return ""
+
+    @classmethod
+    def _normalize_control_phrase(cls, text: str) -> str:
+        text = re.sub(r"\s+", " ", str(text or "").strip()).rstrip(".")
+        if not text:
+            return ""
+        low = text.lower()
+
+        replacements = {
+            "turn left": "rotate counter-clockwise",
+            "turn right": "rotate clockwise",
+            "go left": "rotate counter-clockwise",
+            "go right": "rotate clockwise",
+            "move left": "rotate counter-clockwise",
+            "move right": "rotate clockwise",
+        }
+        for src, dst in replacements.items():
+            if low == src or low.startswith(src + " "):
+                text = dst + text[len(src):]
+                low = text.lower()
+                break
+
+        if "counter clockwise" in low:
+            text = re.sub(r"counter clockwise", "counter-clockwise", text, flags=re.IGNORECASE)
+        if "clock wise" in low:
+            text = re.sub(r"clock wise", "clockwise", text, flags=re.IGNORECASE)
+
+        text = re.sub(r"\bturn\b", "rotate", text, flags=re.IGNORECASE)
+        text = re.sub(r"\btilt up\b", "tilt the knob up", text, flags=re.IGNORECASE)
+        text = re.sub(r"\btilt down\b", "tilt the knob down", text, flags=re.IGNORECASE)
+        if not text.lower().startswith(("hold", "keep", "look", "rotate", "tilt", "advance", "back", "ease", "push", "pull")):
+            text = text[0].upper() + text[1:]
+        return text.rstrip(".") + "."
+
+    @staticmethod
+    def _control_text_from_m_joints(values: Any) -> str:
+        try:
+            bend = float(values[0])
+            rotate = float(values[1])
+            translate = float(values[2])
+        except Exception:
+            return ""
+
+        parts: List[str] = []
+        if bend > 0.05:
+            parts.append("Tilt the knob up.")
+        elif bend < -0.05:
+            parts.append("Tilt the knob down.")
+        if rotate > 0.05:
+            parts.append("Rotate clockwise.")
+        elif rotate < -0.05:
+            parts.append("Rotate counter-clockwise.")
+        if translate > 0.05:
+            parts.append("Advance in small steps.")
+        elif translate < -0.05:
+            parts.append("Pull back slightly.")
+        return " ".join(parts)
